@@ -1,0 +1,305 @@
+{
+  "title": "Biểu Đồ Tri Thức Cautreo & Vivyqu (Cautreo Living Knowledge Graph)",
+  "generated_at": "2026-09-28 20:35:27",
+  "models": {
+    "communication": {
+      "id": "gemma4-e4b",
+      "name": "Vivy Gemma 4 E4B",
+      "path": "D:\\models\\gemma4-e4b\\vivy-gemma-e4b-q4km.gguf",
+      "ready": true,
+      "role": "Giao tiếp, tiếp nhận ý định, giải thích người dùng."
+    },
+    "decomposition": {
+      "id": "qwen2-vl-72b",
+      "name": "Qwen 2 VL 72B Instruct",
+      "path": "D:\\models\\qwen2-vl-72b\\Qwen2-VL-72B-Instruct-Q4_K_M.gguf",
+      "ready": true,
+      "role": "Phân rã tri thức sâu, bóc tách cấu trúc tác vụ, giải mã quan hệ."
+    },
+    "quantum_core": {
+      "id": "vivyqu-e9",
+      "name": "Vivyqu Clifford Cl(12) E9 Engine",
+      "ready": true,
+      "latency_us": 26.8,
+      "role": "Sụp đổ nghiệm hành động hình học siêu thanh (microsecond)."
+    }
+  },
+  "stats": {
+    "total_nodes": 19,
+    "total_edges": 20,
+    "clusters": [
+      "cognitive_models",
+      "quantum_core",
+      "quantum_states",
+      "orchestration",
+      "memory",
+      "physical_body",
+      "organs",
+      "plugins",
+      "host_methods"
+    ],
+    "gemma_available": true,
+    "qwen_available": true
+  },
+  "nodes": [
+    {
+      "id": "model.gemma_4eb",
+      "label": "Gemma 4 E4B",
+      "cluster": "cognitive_models",
+      "role": "communication",
+      "description": "Model giao tiếp chính: Hội thoại tự nhiên, tiếp nhận ý định, giải thích và tương tác với người dùng.",
+      "path": "D:\\models\\gemma4-e4b\\vivy-gemma-e4b-q4km.gguf",
+      "status": "available",
+      "size_bytes": 9608338848,
+      "format": "GGUF Q4_K_M"
+    },
+    {
+      "id": "model.qwen_72b",
+      "label": "Qwen 2 VL 72B",
+      "cluster": "cognitive_models",
+      "role": "decomposition",
+      "description": "Model phân rã tri thức: Bóc tách bài toán phức tạp, phân giải ngữ nghĩa sâu, kiến tạo biểu đồ quan hệ.",
+      "path": "D:\\models\\qwen2-vl-72b\\Qwen2-VL-72B-Instruct-Q4_K_M.gguf",
+      "status": "available",
+      "size_bytes": 47415714048,
+      "format": "GGUF Q4_K_M"
+    },
+    {
+      "id": "soul.vivyqu_core",
+      "label": "Lõi Lượng Tử Vivyqu Core",
+      "cluster": "quantum_core",
+      "role": "decision_engine",
+      "description": "Linh hồn: Đại số hình học Clifford Cl(12), mặt cầu 12-qubit (4.096D), E9 Scorer (26.8 µs).",
+      "architecture": "C++20 AVX2 / Clang++ DLL",
+      "status": "production_ready"
+    },
+    {
+      "id": "qubit.ground",
+      "label": "|00> Ground",
+      "cluster": "quantum_states",
+      "description": "Trạng thái nghỉ tĩnh, bảo toàn năng lượng, SLA chuẩn."
+    },
+    {
+      "id": "qubit.superposition",
+      "label": "|01> Superposition",
+      "cluster": "quantum_states",
+      "description": "Chồng chập giả thuyết: Khám phá không gian phương án."
+    },
+    {
+      "id": "qubit.entanglement",
+      "label": "|10> Entanglement",
+      "cluster": "quantum_states",
+      "description": "Vướng víu dữ liệu: Đồng bộ ngữ cảnh sâu và liên kết mắt-tay."
+    },
+    {
+      "id": "qubit.decay",
+      "label": "|11> Decay",
+      "cluster": "quantum_states",
+      "description": "Phân rã lượng tử: Sụp đổ dứt khoát k*, Early-Exit giảm 50% layer."
+    },
+    {
+      "id": "bridge.harmonizer",
+      "label": "Zero-Allocation Harmonizer Bridge",
+      "cluster": "orchestration",
+      "description": "Cầu nối thần kinh: Chu kỳ 114 µs, triệt tiêu cấp phát bộ nhớ động, tính toán Steering Delta.",
+      "status": "production_ready"
+    },
+    {
+      "id": "guard.watchdog",
+      "label": "Watchdog Circuit Breaker",
+      "cluster": "orchestration",
+      "description": "Cơ chế bảo vệ: Tự động ngắt khẩn cấp khi latency > 2.000 µs hoặc ngoại lệ, bảo vệ hệ thống.",
+      "status": "active"
+    },
+    {
+      "id": "memory.episodic",
+      "label": "Episodic Memory Buffer",
+      "cluster": "memory",
+      "description": "Trí nhớ hồi ức: Bộ đệm lăn 10.000 episodes, NPS Pruning tỉa bẫy giá/lỗi, đồng bộ 2Brain.",
+      "capacity": 10000
+    },
+    {
+      "id": "body.cautreo_host",
+      "label": "Thân Thể Cautreo Host",
+      "cluster": "physical_body",
+      "description": "Thân thể sống: Plugin Registry, Bus IPC, BodyMap tự sinh, Desktop UI Server.",
+      "status": "production_ready"
+    },
+    {
+      "id": "organ.eye",
+      "label": "Mắt (Cơ quan nhận)",
+      "cluster": "organs",
+      "description": "Quan sát, đọc file workspace, tiếp nhận dữ liệu thời gian thực (tool.fs-read)."
+    },
+    {
+      "id": "organ.hand",
+      "label": "Tay (Cơ quan làm)",
+      "cluster": "organs",
+      "description": "Thao tác, ghi file, thực thi hành động ra thế giới vật lý (tool.fs-write)."
+    },
+    {
+      "id": "organ.runtime",
+      "label": "Tư duy & Nhận thức (vivy.runtime)",
+      "cluster": "organs",
+      "description": "Cơ quan kép: Vừa nhận vừa làm, tiêu hóa trí nhớ, hỏi model và phối hợp tác vụ."
+    },
+    {
+      "id": "plugin.tool.fs-read",
+      "label": "tool.fs-read",
+      "cluster": "plugins",
+      "organ": "eye",
+      "version": "1.0.0",
+      "status": "activated"
+    },
+    {
+      "id": "plugin.tool.fs-write",
+      "label": "tool.fs-write",
+      "cluster": "plugins",
+      "organ": "hand",
+      "version": "1.0.0",
+      "status": "activated"
+    },
+    {
+      "id": "plugin.vivy.runtime",
+      "label": "vivy.runtime",
+      "cluster": "plugins",
+      "organ": "both",
+      "version": "0.1.0",
+      "status": "activated"
+    },
+    {
+      "id": "method.host.body-map",
+      "label": "host.body-map",
+      "cluster": "host_methods",
+      "description": "Phương thức nền tảng của Cautreo Host: host.body-map"
+    },
+    {
+      "id": "method.host.knowledge-graph",
+      "label": "host.knowledge-graph",
+      "cluster": "host_methods",
+      "description": "Phương thức nền tảng của Cautreo Host: host.knowledge-graph"
+    }
+  ],
+  "edges": [
+    {
+      "source": "soul.vivyqu_core",
+      "target": "qubit.ground",
+      "relation": "governs_state",
+      "type": "state_transition"
+    },
+    {
+      "source": "soul.vivyqu_core",
+      "target": "qubit.superposition",
+      "relation": "governs_state",
+      "type": "state_transition"
+    },
+    {
+      "source": "soul.vivyqu_core",
+      "target": "qubit.entanglement",
+      "relation": "governs_state",
+      "type": "state_transition"
+    },
+    {
+      "source": "soul.vivyqu_core",
+      "target": "qubit.decay",
+      "relation": "governs_state",
+      "type": "state_transition"
+    },
+    {
+      "source": "organ.eye",
+      "target": "plugin.tool.fs-read",
+      "relation": "houses_plugin",
+      "type": "containment"
+    },
+    {
+      "source": "organ.hand",
+      "target": "plugin.tool.fs-write",
+      "relation": "houses_plugin",
+      "type": "containment"
+    },
+    {
+      "source": "organ.runtime",
+      "target": "plugin.vivy.runtime",
+      "relation": "houses_plugin",
+      "type": "containment"
+    },
+    {
+      "source": "user",
+      "target": "model.gemma_4eb",
+      "relation": "speaks_to",
+      "description": "Người dùng gửi yêu cầu hội thoại, chỉ thị hoặc câu hỏi trực tiếp."
+    },
+    {
+      "source": "model.gemma_4eb",
+      "target": "user",
+      "relation": "responds_to",
+      "description": "Gemma giải thích, đối thoại thân thiện và phản hồi người dùng."
+    },
+    {
+      "source": "model.gemma_4eb",
+      "target": "model.qwen_72b",
+      "relation": "delegates_decomposition",
+      "description": "Gemma chuyển giao bài toán phức tạp cho Qwen 72B để phân rã tri thức sâu."
+    },
+    {
+      "source": "model.qwen_72b",
+      "target": "soul.vivyqu_core",
+      "relation": "feeds_latent_cues",
+      "description": "Qwen 72B cung cấp vector đặc trưng ngữ nghĩa cho Lõi Vivyqu E9."
+    },
+    {
+      "source": "soul.vivyqu_core",
+      "target": "bridge.harmonizer",
+      "relation": "drives_harmonizer",
+      "description": "Lõi E9 truyền nghiệm hành động sụp đổ k* và vector lái steering delta."
+    },
+    {
+      "source": "bridge.harmonizer",
+      "target": "guard.watchdog",
+      "relation": "monitored_by",
+      "description": "Watchdog giám sát độ trễ vi mô của từng chu kỳ Harmonizer."
+    },
+    {
+      "source": "bridge.harmonizer",
+      "target": "body.cautreo_host",
+      "relation": "injects_macro_action",
+      "description": "Tiêm macro-action trực tiếp vào Cautreo Bus để chấp hành."
+    },
+    {
+      "source": "body.cautreo_host",
+      "target": "organ.eye",
+      "relation": "routes_read",
+      "description": "Bus chuyển lệnh đọc tới cơ quan Mắt."
+    },
+    {
+      "source": "body.cautreo_host",
+      "target": "organ.hand",
+      "relation": "routes_write",
+      "description": "Bus chuyển lệnh thực thi tới cơ quan Tay."
+    },
+    {
+      "source": "body.cautreo_host",
+      "target": "memory.episodic",
+      "relation": "records_episode",
+      "description": "Ghi nhận kết quả hành động vào Trí nhớ hồi ức để tự hoàn thiện."
+    },
+    {
+      "source": "memory.episodic",
+      "target": "soul.vivyqu_core",
+      "relation": "nps_pruning_feedback",
+      "description": "Tỉa bỏ bitmask các hành động gây lỗi và kích hoạt Replay Hamiltonian Torque."
+    },
+    {
+      "source": "body.cautreo_host",
+      "target": "method.host.body-map",
+      "relation": "exposes_method",
+      "type": "capability"
+    },
+    {
+      "source": "body.cautreo_host",
+      "target": "method.host.knowledge-graph",
+      "relation": "exposes_method",
+      "type": "capability"
+    }
+  ]
+}

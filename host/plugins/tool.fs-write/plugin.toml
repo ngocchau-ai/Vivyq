@@ -1,0 +1,13 @@
+[plugin]
+id = "tool.fs-write"
+version = "1.0.0"
+api = 1
+kind = "tool"
+# Tay — cơ quan của sự làm. Ghi là làm ra thay đổi.
+organ = "hand"
+
+[entry]
+logic = "logic/main.py"
+
+[permissions]
+grant = ["fs.workspace"]

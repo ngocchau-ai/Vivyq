@@ -1,0 +1,4 @@
+# VIVYQU BASELINE A2 CRYPTOGRAPHIC FREEZE MANIFEST
+# Created: 2026-09-27 15:21:04
+9f1198b694e691e50b830baee80db3c9e5b998926b1c58a198d8134ab3bfa328  baseline_a2_weights.npz
+b1e3ddc28eff9faa7fcb5c4ea037b25d38ca1d763ad2e193d2c0b5ecd967a4ee  baseline_a2_test_predictions.json

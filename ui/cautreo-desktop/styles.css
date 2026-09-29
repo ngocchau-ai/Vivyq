@@ -1,0 +1,1199 @@
+/* Cautreo Desktop UI — instrument chassis for a living body
+   Tokens follow the design plan: ink/bone chassis, four semantic organ hues,
+   one bold element (the Thanh Thân thể vitals trace). */
+
+:root {
+  /* chassis */
+  --ink: #13191b;
+  --panel: #1b2427;
+  --inset: #222d31;
+  --line: #2a383c;
+  --line-soft: #223034;
+
+  /* type */
+  --bone: #e9e2d4;
+  --bone-dim: #b8b1a3;
+  --slate: #7e9096;
+  --slate-deep: #5d6e73;
+
+  /* organs */
+  --nerve: #7bc5b0; /* sống · online */
+  --iris: #6fb6d9;  /* Mắt · nhận */
+  --ochre: #d9a05b; /* Tay · làm */
+  --clot: #c25b4e;  /* hỏng · degraded */
+  --soul: #a99bd4;  /* linh hồn · model */
+
+  /* type scale */
+  --t-label: 11.5px;
+  --t-small: 12.5px;
+  --t-body: 14px;
+  --t-read: 16px;
+  --t-title: 20px;
+  --t-display: 28px;
+
+  --sans: "Be Vietnam Pro", "Segoe UI", system-ui, sans-serif;
+  --serif: "Source Serif 4", "Iowan Old Style", Georgia, serif;
+
+  --r-sm: 4px;
+  --r-md: 7px;
+  --r-lg: 11px;
+
+  --dock-w: 268px;
+  --rail-w: 58px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--ink);
+  color: var(--bone);
+  font-family: var(--sans);
+  font-size: var(--t-body);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 2px solid var(--iris);
+  outline-offset: 2px;
+}
+
+.app {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  height: 100vh;
+  min-height: 560px;
+}
+
+/* ─────────────────────────────────────────────
+   THANH THÂN THỂ — the one bold element
+   ───────────────────────────────────────────── */
+
+.body-bar {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 0 16px 0 0;
+  height: 52px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+  overflow: hidden;
+}
+
+.vitals {
+  flex: 0 0 236px;
+  height: 52px;
+  position: relative;
+  background: linear-gradient(90deg, #162022, var(--panel));
+  border-right: 1px solid var(--line);
+}
+
+.vitals svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.vitals .trace {
+  fill: none;
+  stroke: var(--nerve);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: .95;
+}
+
+.body-bar[data-link="DEGRADED"] .trace { stroke: var(--clot); opacity: .9; }
+.body-bar[data-link="OFFLINE"] .trace { stroke: var(--slate-deep); opacity: .7; }
+.body-bar[data-link="BOOTING"] .trace,
+.body-bar[data-link="LINKING"] .trace { stroke: var(--slate); opacity: .8; }
+
+.link-chip {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  min-width: 132px;
+}
+
+.link-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--nerve);
+  align-self: center;
+  flex: none;
+}
+
+.link-chip[data-link="DEGRADED"] .link-dot { background: var(--clot); }
+.link-chip[data-link="OFFLINE"] .link-dot { background: var(--slate-deep); }
+.link-chip[data-link="BOOTING"] .link-dot,
+.link-chip[data-link="LINKING"] .link-dot {
+  background: var(--slate);
+  animation: breathe 1.4s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%, 100% { opacity: .35; }
+  50% { opacity: 1; }
+}
+
+.link-name {
+  font-weight: 600;
+  font-size: var(--t-body);
+  letter-spacing: .01em;
+}
+
+.link-reason {
+  font-size: var(--t-label);
+  color: var(--clot);
+  letter-spacing: .01em;
+  white-space: nowrap;
+}
+
+.organ-state {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: var(--t-small);
+  color: var(--bone-dim);
+  white-space: nowrap;
+}
+
+.organ-state .glyph {
+  width: 15px;
+  height: 15px;
+  flex: none;
+}
+.organ-state[data-organ="eye"] .glyph { color: var(--iris); }
+.organ-state[data-organ="hand"] .glyph { color: var(--ochre); }
+
+.organ-state b {
+  color: var(--bone);
+  font-weight: 500;
+}
+
+.bar-tally {
+  font-size: var(--t-small);
+  color: var(--slate);
+  white-space: nowrap;
+}
+
+.bar-tally b {
+  color: var(--bone);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.bar-model {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--t-small);
+  color: var(--slate);
+  white-space: nowrap;
+}
+
+.bar-model code {
+  font-family: var(--sans);
+  color: var(--soul);
+  background: rgba(169, 155, 212, .1);
+  border: 1px solid rgba(169, 155, 212, .22);
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: var(--t-label);
+}
+
+/* Chip model chỉ giữ sắc tím khi cơ thể thật sự nối được model.
+   Mất kết nối thì chip phải tự thú, không được tiếp tục đọc như "đang dùng". */
+.body-bar[data-link="DEGRADED"] .bar-model code {
+  color: var(--clot);
+  background: rgba(194, 91, 78, .1);
+  border-color: rgba(194, 91, 78, .28);
+}
+
+.body-bar[data-link="OFFLINE"] .bar-model code {
+  color: var(--slate-deep);
+  background: rgba(93, 110, 115, .1);
+  border-color: rgba(93, 110, 115, .24);
+}
+
+.retry-btn {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border: 1px solid var(--clot);
+  border-radius: var(--r-sm);
+  color: var(--clot);
+  font-size: var(--t-small);
+  font-weight: 500;
+}
+
+.link-chip[data-link="DEGRADED"] ~ .bar-model .retry-btn { display: inline-flex; }
+
+.retry-btn:hover { background: rgba(194, 91, 78, .14); }
+
+.proto-switch {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding-left: 12px;
+  border-left: 1px solid var(--line);
+  font-size: var(--t-label);
+  color: var(--slate-deep);
+}
+
+.proto-switch span { letter-spacing: .04em; }
+
+.proto-switch button {
+  padding: 3px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  color: var(--slate);
+  font-size: var(--t-label);
+}
+
+.proto-switch button[aria-pressed="true"] {
+  border-color: var(--iris);
+  color: var(--iris);
+  background: rgba(111, 182, 217, .1);
+}
+
+/* Nối được bus thật thì cất công tắc trạng thái mẫu đi.
+   Không cho "giả vờ" state khi đang xem máy thật. */
+body[data-bus="live"] .proto-switch { display: none; }
+
+/* ─────────────────────────────────────────────
+   Shell: rail · dock · content
+   ───────────────────────────────────────────── */
+
+.shell {
+  display: grid;
+  grid-template-columns: var(--rail-w) var(--dock-w) 1fr;
+  min-height: 0;
+}
+
+.rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 0;
+  background: var(--panel);
+  border-right: 1px solid var(--line);
+}
+
+.rail-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-md);
+  display: grid;
+  place-items: center;
+  color: var(--slate);
+  position: relative;
+}
+
+.rail-btn svg {
+  width: 19px;
+  height: 19px;
+}
+
+.rail-btn:hover { background: var(--inset); color: var(--bone-dim); }
+
+.rail-btn[aria-current="page"] {
+  background: var(--inset);
+  color: var(--bone);
+}
+
+.rail-btn[aria-current="page"]::before {
+  content: "";
+  position: absolute;
+  left: -9px;
+  top: 9px;
+  bottom: 9px;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background: var(--nerve);
+}
+
+.rail-btn[data-surface="giao-tiep"][aria-current="page"]::before { background: var(--iris); }
+.rail-btn[data-surface="nhiem-vu"][aria-current="page"]::before { background: var(--nerve); }
+.rail-btn[data-surface="he-thong"][aria-current="page"]::before { background: var(--slate); }
+.rail-btn[data-surface="skill-plugin"][aria-current="page"]::before { background: var(--ochre); }
+
+.rail-sep {
+  width: 22px;
+  height: 1px;
+  background: var(--line);
+  margin: 6px 0;
+}
+
+.rail-btn.runtime {
+  border: 1px dashed var(--line);
+  border-radius: var(--r-md);
+  color: var(--slate-deep);
+  font-size: 15px;
+}
+
+.rail-btn.runtime:hover {
+  border-color: var(--ochre);
+  color: var(--ochre);
+}
+
+.rail-tip {
+  position: absolute;
+  left: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 4px 9px;
+  background: var(--inset);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  font-size: var(--t-small);
+  color: var(--bone-dim);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .12s;
+  z-index: 20;
+}
+
+.rail-btn:hover .rail-tip,
+.rail-btn:focus-visible .rail-tip { opacity: 1; }
+
+/* ─────────────────────────────────────────────
+   Panel dock — panels "đậu" theo nhóm tab (D7)
+   ───────────────────────────────────────────── */
+
+.dock {
+  min-height: 0;
+  overflow-y: auto;
+  background: var(--ink);
+  border-right: 1px solid var(--line);
+  padding: 12px 11px 20px;
+}
+
+.dock-group { margin-bottom: 14px; }
+
+.dock-tabs {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 7px;
+}
+
+.dock-tab {
+  padding: 4px 10px;
+  border-radius: var(--r-sm) var(--r-sm) 0 0;
+  font-size: var(--t-label);
+  color: var(--slate);
+  border: 1px solid transparent;
+  border-bottom: none;
+}
+
+.dock-tab:hover { color: var(--bone-dim); }
+
+.dock-tab[aria-selected="true"] {
+  color: var(--bone);
+  background: var(--panel);
+  border-color: var(--line);
+}
+
+.dock-body {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 0 var(--r-md) var(--r-md) var(--r-md);
+  padding: 10px;
+  min-height: 74px;
+}
+
+.dock-body[hidden] { display: none; }
+
+.dock-label {
+  font-size: var(--t-label);
+  color: var(--slate-deep);
+  letter-spacing: .02em;
+  margin: 2px 0 8px;
+}
+
+.row-item {
+  padding: 7px 9px;
+  border-radius: var(--r-sm);
+  background: var(--inset);
+  margin-bottom: 5px;
+  font-size: var(--t-small);
+  color: var(--bone-dim);
+  line-height: 1.45;
+}
+
+.row-item.is-on {
+  background: rgba(111, 182, 217, .12);
+  color: var(--bone);
+  box-shadow: inset 2px 0 0 var(--iris);
+}
+
+.row-item .row-sub {
+  display: block;
+  color: var(--slate);
+  font-size: var(--t-label);
+  margin-top: 2px;
+}
+
+.row-item .row-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-right: 6px;
+  background: var(--slate-deep);
+  vertical-align: middle;
+}
+
+.row-item .row-dot.ok { background: var(--nerve); }
+.row-item .row-dot.run { background: var(--ochre); }
+.row-item .row-dot.wait { background: var(--slate); }
+.row-item .row-dot.fail { background: var(--clot); }
+
+/* ─────────────────────────────────────────────
+   Content zone
+   ───────────────────────────────────────────── */
+
+.content {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--ink);
+}
+
+.content-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 16px 24px 10px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.content-head h1 {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: var(--t-display);
+  font-weight: 600;
+  letter-spacing: -.015em;
+  line-height: 1.15;
+}
+
+.content-head p {
+  margin: 0;
+  color: var(--slate);
+  font-size: var(--t-small);
+}
+
+.content-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.content-tab {
+  padding: 9px 13px;
+  font-size: var(--t-small);
+  color: var(--slate);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.content-tab:hover { color: var(--bone-dim); }
+
+.content-tab[aria-selected="true"] {
+  color: var(--bone);
+  border-bottom-color: var(--nerve);
+}
+
+.surface {
+  flex: 1;
+  min-height: 0;
+  display: none;
+  flex-direction: column;
+}
+
+.surface.is-active { display: flex; }
+
+.surface-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 20px 24px 24px;
+}
+
+.pane[hidden] { display: none; }
+
+/* ── thought stream: ViVy's voice, serif ── */
+
+.stream {
+  max-width: 64ch;
+}
+
+.entry {
+  margin-bottom: 18px;
+}
+
+.entry-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 5px;
+  font-family: var(--sans);
+  font-size: var(--t-label);
+  color: var(--slate);
+}
+
+.entry-kind {
+  color: var(--bone-dim);
+  font-weight: 500;
+}
+
+.entry-time {
+  font-variant-numeric: tabular-nums;
+  color: var(--slate-deep);
+}
+
+.entry-body {
+  font-family: var(--serif);
+  font-size: var(--t-read);
+  line-height: 1.68;
+  color: var(--bone);
+}
+
+.entry-body code {
+  font-family: var(--sans);
+  font-size: 13px;
+  background: var(--inset);
+  padding: 1px 5px;
+  border-radius: var(--r-sm);
+  color: var(--bone-dim);
+}
+
+.entry.is-tool .entry-body {
+  font-family: var(--sans);
+  font-size: var(--t-body);
+  color: var(--bone-dim);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 10px 12px;
+}
+
+.entry.is-error .entry-body {
+  font-family: var(--sans);
+  font-size: var(--t-body);
+  color: var(--bone-dim);
+  background: rgba(194, 91, 78, .09);
+  border: 1px solid rgba(194, 91, 78, .35);
+  border-radius: var(--r-md);
+  padding: 10px 12px;
+}
+
+/* provenance label — host-assigned, never plugin-assigned */
+.src {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 1px 8px 1px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  font-family: var(--sans);
+  font-size: var(--t-label);
+  color: var(--slate);
+  line-height: 1.6;
+}
+
+.src::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--slate);
+}
+
+.src[data-src="model"] { color: var(--soul); border-color: rgba(169, 155, 212, .3); }
+.src[data-src="model"]::before { background: var(--soul); }
+
+.src[data-src="cautreo"] { color: var(--nerve); border-color: rgba(123, 197, 176, .3); }
+.src[data-src="cautreo"]::before { background: var(--nerve); }
+
+.src[data-src="tool-local"] { color: var(--ochre); border-color: rgba(217, 160, 91, .3); }
+.src[data-src="tool-local"]::before { background: var(--ochre); }
+
+.src[data-src="derived"] { color: var(--slate); }
+.src[data-src="derived"]::before { background: var(--slate); }
+
+/* ── luồng tư duy — bày LẦN LƯỢT, mỗi khối TỰ THU GỌN ──
+   Đây là chữ của model: không cắt bỏ, chỉ không bày ra trước mặt khi chưa ai
+   hỏi. Bấm vào dòng tóm tắt là mở; không có `open` sẵn nên mặc định là đóng. */
+
+.thinking-stack {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.thinking {
+  border: 1px dashed var(--line);
+  border-radius: var(--r-sm);
+  background: var(--inset);
+}
+
+.thinking-summary {
+  cursor: pointer;
+  padding: 6px 10px;
+  font-family: var(--sans);
+  font-size: var(--t-label);
+  color: var(--slate);
+  user-select: none;
+}
+
+.thinking-summary:hover {
+  color: var(--bone-dim);
+}
+
+.thinking-summary:focus-visible {
+  outline: 2px solid var(--soul);
+  outline-offset: -2px;
+}
+
+.thinking[open] > .thinking-summary {
+  color: var(--bone-dim);
+  border-bottom: 1px solid var(--line);
+}
+
+.thinking-body {
+  padding: 10px 12px;
+  font-family: var(--sans);
+  font-size: var(--t-small);
+  line-height: 1.62;
+  color: var(--slate);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* ── composer (D9: DEGRADED vẫn nhận lệnh) ── */
+
+.composer {
+  padding: 14px 24px 18px;
+  border-top: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.composer-hint {
+  font-size: var(--t-small);
+  color: var(--slate);
+  margin: 0 0 8px;
+}
+
+.composer-hint.is-degraded { color: var(--clot); }
+
+.composer-row {
+  display: flex;
+  gap: 9px;
+  max-width: 780px;
+}
+
+.composer textarea {
+  flex: 1;
+  resize: none;
+  font: inherit;
+  font-size: var(--t-body);
+  color: var(--bone);
+  background: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 11px 13px;
+  min-height: 46px;
+  max-height: 140px;
+  line-height: 1.5;
+}
+
+.composer textarea::placeholder { color: var(--slate-deep); }
+
+.composer textarea:focus {
+  outline: none;
+  border-color: var(--iris);
+}
+
+.composer textarea:disabled {
+  color: var(--slate-deep);
+  cursor: not-allowed;
+}
+
+.send-btn {
+  align-self: stretch;
+  padding: 0 20px;
+  border-radius: var(--r-md);
+  background: var(--nerve);
+  color: var(--ink);
+  font-weight: 600;
+  font-size: var(--t-body);
+}
+
+.send-btn:hover { filter: brightness(1.08); }
+
+.send-btn:disabled {
+  background: var(--inset);
+  color: var(--slate-deep);
+  cursor: not-allowed;
+  filter: none;
+}
+
+/* ── generic instrument plates ── */
+
+.plate {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 16px 18px;
+  margin-bottom: 14px;
+}
+
+.plate h2 {
+  margin: 0 0 4px;
+  font-family: var(--serif);
+  font-size: var(--t-title);
+  font-weight: 600;
+  letter-spacing: -.01em;
+}
+
+.plate h3 {
+  margin: 0 0 10px;
+  font-size: var(--t-small);
+  font-weight: 600;
+  color: var(--slate);
+  letter-spacing: .01em;
+}
+
+.plate .plate-note {
+  margin: 0 0 14px;
+  color: var(--slate);
+  font-size: var(--t-small);
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+@media (max-width: 1080px) {
+  .grid-2 { grid-template-columns: 1fr; }
+}
+
+/* meter */
+
+.meter {
+  margin-bottom: 12px;
+}
+
+.meter-top {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--t-small);
+  color: var(--bone-dim);
+  margin-bottom: 5px;
+}
+
+.meter-top b {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--bone);
+}
+
+.meter-track {
+  height: 5px;
+  border-radius: 3px;
+  background: var(--inset);
+  overflow: hidden;
+}
+
+.meter-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--nerve);
+}
+
+.meter-fill.iris { background: var(--iris); }
+.meter-fill.ochre { background: var(--ochre); }
+.meter-fill.clot { background: var(--clot); }
+
+/* receipt table */
+
+.receipts {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--t-small);
+}
+
+.receipts th {
+  text-align: left;
+  font-weight: 500;
+  color: var(--slate-deep);
+  padding: 6px 10px 8px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: var(--t-label);
+}
+
+.receipts td {
+  padding: 9px 10px 9px 0;
+  border-bottom: 1px solid var(--line-soft);
+  color: var(--bone-dim);
+  vertical-align: top;
+}
+
+.receipts td.id {
+  font-variant-numeric: tabular-nums;
+  color: var(--slate);
+  white-space: nowrap;
+}
+
+.receipts td b {
+  color: var(--bone);
+  font-weight: 500;
+}
+
+/* registry */
+
+.reg-item {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 13px;
+  background: var(--inset);
+  border-radius: var(--r-md);
+  margin-bottom: 7px;
+}
+
+.reg-id {
+  font-size: var(--t-body);
+  color: var(--bone);
+  font-weight: 500;
+}
+
+.reg-id .row-sub {
+  display: block;
+  font-weight: 400;
+  color: var(--slate);
+  font-size: var(--t-label);
+  margin-top: 1px;
+}
+
+.tag {
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: var(--t-label);
+  border: 1px solid var(--line);
+  color: var(--slate);
+  white-space: nowrap;
+}
+
+.tag[data-organ="eye"] { color: var(--iris); border-color: rgba(111, 182, 217, .32); }
+.tag[data-organ="hand"] { color: var(--ochre); border-color: rgba(217, 160, 91, .32); }
+.tag[data-organ="both"] { color: var(--nerve); border-color: rgba(123, 197, 176, .32); }
+
+.tag[data-state="activated"] { color: var(--nerve); border-color: rgba(123, 197, 176, .32); }
+.tag[data-state="loaded"] { color: var(--slate); }
+.tag[data-state="deactivated"] { color: var(--clot); border-color: rgba(194, 91, 78, .32); }
+
+/* manifest editor */
+
+.manifest {
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: 12.5px;
+  line-height: 1.75;
+  color: var(--bone-dim);
+  background: var(--inset);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 14px 16px;
+  margin: 0;
+  overflow-x: auto;
+}
+
+.manifest .k { color: var(--iris); }
+.manifest .s { color: var(--nerve); }
+.manifest .n { color: var(--ochre); }
+.manifest .c { color: var(--slate-deep); }
+
+/* contract graph */
+
+.contract {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 18px 4px 6px;
+}
+
+.contract-node {
+  padding: 10px 16px;
+  border-radius: var(--r-md);
+  font-size: var(--t-small);
+  font-weight: 500;
+  border: 1px solid var(--line);
+  background: var(--inset);
+  color: var(--bone-dim);
+}
+
+.contract-node.js { color: var(--iris); border-color: rgba(111, 182, 217, .38); }
+.contract-node.bus { color: var(--soul); border-color: rgba(169, 155, 212, .38); }
+.contract-node.py { color: var(--ochre); border-color: rgba(217, 160, 91, .38); }
+
+.contract-arrow { color: var(--slate-deep); font-size: var(--t-small); }
+
+.contract-cap {
+  width: 100%;
+  margin-top: 10px;
+  color: var(--slate);
+  font-size: var(--t-small);
+  line-height: 1.6;
+  max-width: 68ch;
+}
+
+/* task list */
+
+.task {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  align-items: start;
+  padding: 13px 15px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  margin-bottom: 8px;
+}
+
+.task.is-on { border-color: rgba(123, 197, 176, .4); box-shadow: inset 2px 0 0 var(--nerve); }
+
+.task-mark {
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  border: 1.5px solid var(--slate-deep);
+  margin-top: 2px;
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  color: var(--ink);
+}
+
+.task.is-done .task-mark {
+  background: var(--nerve);
+  border-color: var(--nerve);
+}
+
+.task.is-on .task-mark {
+  border-color: var(--nerve);
+  animation: breathe 1.6s ease-in-out infinite;
+}
+
+.task-title {
+  color: var(--bone);
+  font-size: var(--t-body);
+  font-weight: 500;
+  margin-bottom: 3px;
+}
+
+.task.is-done .task-title {
+  color: var(--slate);
+  text-decoration: line-through;
+  text-decoration-color: var(--slate-deep);
+}
+
+.task-sub {
+  color: var(--slate);
+  font-size: var(--t-small);
+  line-height: 1.55;
+}
+
+/* empty state — invitation to act */
+
+.empty {
+  border: 1px dashed var(--line);
+  border-radius: var(--r-lg);
+  padding: 28px 24px;
+  color: var(--slate);
+  font-size: var(--t-body);
+  line-height: 1.65;
+  max-width: 58ch;
+}
+
+.empty b {
+  color: var(--bone-dim);
+  font-weight: 500;
+}
+
+/* state machine diagram */
+
+.machine {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 6px 0 2px;
+  font-size: var(--t-small);
+}
+
+.machine-node {
+  padding: 7px 13px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line);
+  color: var(--bone-dim);
+  background: var(--inset);
+  font-weight: 500;
+}
+
+.machine-node.live {
+  border-color: var(--nerve);
+  color: var(--nerve);
+  background: rgba(123, 197, 176, .1);
+}
+
+.machine-node.bad {
+  border-color: var(--clot);
+  color: var(--clot);
+  background: rgba(194, 91, 78, .1);
+}
+
+.machine-node.user {
+  border-style: dashed;
+  color: var(--slate);
+}
+
+.machine-link { color: var(--slate-deep); }
+
+/* misc */
+
+.kv {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 16px;
+  font-size: var(--t-small);
+}
+
+.kv dt { color: var(--slate); }
+.kv dd { margin: 0; color: var(--bone-dim); }
+
+/* ---- bản đồ thân thể ----
+   Bảng dữ liệu, không phải điểm nhấn thị giác. Màu cơ quan chỉ dùng cho tiêu
+   đề mục để mắt quét được Mắt/Tay — phần còn lại giữ trung tính như mọi plate. */
+
+.body-map { display: flex; flex-direction: column; gap: 14px; }
+
+.map-section h4 {
+  margin: 0 0 6px;
+  font-size: var(--t-label);
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--slate);
+}
+
+.map-section:nth-child(1) h4 { color: var(--iris); }
+.map-section:nth-child(2) h4 { color: var(--ochre); }
+.map-section:nth-child(3) h4 { color: var(--nerve); }
+.map-section:nth-child(5) h4 { color: var(--clot); }
+
+.map-parts, .map-methods {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.map-parts { display: flex; flex-direction: column; gap: 8px; }
+
+.map-part {
+  background: var(--inset);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-md);
+  padding: 8px 10px;
+}
+
+.map-part-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.map-part-head code {
+  font-size: var(--t-small);
+  color: var(--bone);
+  overflow-wrap: anywhere;
+}
+
+.map-part-meta {
+  font-size: var(--t-label);
+  color: var(--slate);
+  white-space: nowrap;
+}
+
+.map-part-grants {
+  margin-top: 3px;
+  font-size: var(--t-label);
+  color: var(--slate-deep);
+  overflow-wrap: anywhere;
+}
+
+.map-methods {
+  margin-top: 6px;
+  padding-left: 12px;
+  border-left: 1px solid var(--line-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.map-methods code {
+  font-size: var(--t-small);
+  color: var(--bone-dim);
+  overflow-wrap: anywhere;
+}
+
+.map-need { color: var(--soul); font-size: var(--t-label); }
+
+.map-counts {
+  margin: 4px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--line-soft);
+  font-size: var(--t-label);
+  color: var(--slate);
+}
+
+.rule {
+  height: 1px;
+  background: var(--line-soft);
+  border: none;
+  margin: 16px 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+  }
+}

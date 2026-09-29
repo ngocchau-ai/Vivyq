@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Test / scratch pollution
+_pytest_tmp/
+scratch_tmp/
+scratch/
+*_pytest_tmp/
+
+# Build intermediates (keep build/bin deliverables if needed)
+build/obj/
+*.o
+*.obj
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+*.swp

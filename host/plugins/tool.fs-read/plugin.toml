@@ -1,0 +1,13 @@
+[plugin]
+id = "tool.fs-read"
+version = "1.0.0"
+api = 1
+kind = "tool"
+# Mắt — cơ quan của sự nhận. Đọc là lấy vào, không phải làm ra.
+organ = "eye"
+
+[entry]
+logic = "logic/main.py"
+
+[permissions]
+grant = ["fs.workspace"]

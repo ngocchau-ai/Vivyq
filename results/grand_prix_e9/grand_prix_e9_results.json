@@ -1,0 +1,44 @@
+{
+  "benchmark": "Grand_Prix_E9_Multi_Branch_Showdown",
+  "test_samples": 1500,
+  "mask_protocol": "bitorder='little'",
+  "checksum_verified": true,
+  "branches": {
+    "Branch_A_Baseline_A2": {
+      "validity_rate_percent": 100.0,
+      "mean_regret_percent": 6.231401736537616e-07,
+      "p95_regret_percent": 0.0,
+      "latency_python_us": 57.40000051446259,
+      "latency_core_cpp_us": 3.5,
+      "latency_core_cpp_source": "Sprint 3 C-ABI microbenchmark metadata reference"
+    },
+    "Branch_B_Hilbert_H12": {
+      "algorithm_actual": "FWHT Spectral + Ridge Linear Readout",
+      "validity_rate_percent": 100.0,
+      "mean_regret_percent": 2.8845568923316898,
+      "p95_regret_percent": 11.292295646667474,
+      "latency_python_us": 1134.9507333361544,
+      "latency_core_cpp_us": 12.0,
+      "latency_core_cpp_source": "Sprint 3 microbenchmark metadata reference"
+    },
+    "Branch_C_Clifford_Cl12": {
+      "algorithm_actual": "8 Givens Rotors + Ridge Readout W_c + Candidate Codebook (Integrated in C++ Core)",
+      "validity_rate_percent": 100.0,
+      "mean_regret_percent": 6.231401736537616e-07,
+      "p95_regret_percent": 0.0,
+      "latency_python_us": 382.3675333308832,
+      "latency_core_cpp_us": 28.5,
+      "latency_core_cpp_p95_us": 38.1,
+      "latency_core_cpp_p99_us": 79.1,
+      "latency_core_cpp_source": "Empirical measurement on production C++ DLL with AVX2/FMA/BMI2"
+    }
+  },
+  "verdict": {
+    "all_passed_e0_sla": true,
+    "tied_champions_regret": [
+      "Branch A (Baseline A2)",
+      "Branch C (Clifford Cl(12))"
+    ],
+    "decision_gate_outcome": "PASS_E9_V2_REVERIFIED"
+  }
+}

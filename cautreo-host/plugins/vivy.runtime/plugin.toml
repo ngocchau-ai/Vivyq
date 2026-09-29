@@ -1,0 +1,13 @@
+[plugin]
+id = "vivy.runtime"
+version = "0.1.0"
+api = 1
+kind = "runtime"
+# Runtime là cơ quan của sự suy nghĩ — vừa nhận vừa làm, nên organ = both.
+organ = "both"
+
+[entry]
+logic = "logic/main.py"
+
+[permissions]
+grant = ["model.connect", "cautreo.access"]

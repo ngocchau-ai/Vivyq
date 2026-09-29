@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vivyqu"
+version = "1.2.0"
+authors = [
+  { name="Ngoc Chau", email="contact@cautreo.internal" },
+  { name="Antigravity Assistant" },
+]
+description = "VivyQu: Quantum-Inspired Cognitive Engine & Real-Time Decision Core"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "numpy>=1.22.0",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: C++",
+    "Operating System :: Microsoft :: Windows",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Mathematics",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/ngocchau/vivyqu"
+
+[tool.setuptools.packages.find]
+where = ["python"]
+
+[tool.setuptools.package-data]
+vivyqu = ["*.dll"]

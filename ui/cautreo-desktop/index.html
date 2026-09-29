@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cautreo — bàn điều khiển cơ thể</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ══ THANH THÂN THỂ ══ -->
+  <header class="body-bar" id="bodyBar" data-link="ONLINE">
+
+    <div class="vitals" aria-hidden="true">
+      <svg id="traceSvg" viewBox="0 0 236 52" preserveAspectRatio="none">
+        <path class="trace" id="tracePath" d=""></path>
+      </svg>
+    </div>
+
+    <div class="link-chip" id="linkChip" data-link="ONLINE">
+      <span class="link-dot"></span>
+      <div>
+        <div class="link-name" id="linkName">online</div>
+        <div class="link-reason" id="linkReason"></div>
+      </div>
+    </div>
+
+    <div class="organ-state" data-organ="eye">
+      <svg class="glyph" viewBox="0 0 20 20" aria-hidden="true"><path d="M1.8 10s3-5 8.2-5 8.2 5 8.2 5-3 5-8.2 5S1.8 10 1.8 10z" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="10" r="2.1" fill="currentColor"/></svg>
+      <span>Mắt · <b id="eyeState">đang đọc</b></span>
+    </div>
+
+    <div class="organ-state" data-organ="hand">
+      <svg class="glyph" viewBox="0 0 20 20" aria-hidden="true"><path d="M6.6 10.2V4.9a1.1 1.1 0 012.2 0v4.3M8.8 9.2V3.7a1.1 1.1 0 012.2 0v5.5M11 9.2V4.6a1.1 1.1 0 012.2 0v4.9M13.2 9.6V6.2a1.1 1.1 0 012.2 0v5.5c0 3-2.2 5.1-5.2 5.1-2.4 0-3.8-1-5-2.6l-1.6-2.2a1.1 1.1 0 011.7-1.4l1.7 1.8" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Tay · <b id="handState">đang ghi</b></span>
+    </div>
+
+    <div class="bar-tally">đang học <b id="learnCount">3</b></div>
+    <div class="bar-tally">đang làm <b id="workCount">2</b></div>
+
+    <div class="bar-model">
+      <code id="modelName">gemma4-e4b</code>
+      <button class="retry-btn" id="retryBtn" type="button">Thử lại ngay</button>
+      <div class="proto-switch" id="protoSwitch" role="group" aria-label="Chuyển trạng thái mẫu">
+        <span>mẫu</span>
+        <button type="button" data-set="ONLINE" aria-pressed="true">online</button>
+        <button type="button" data-set="DEGRADED" aria-pressed="false">degraded</button>
+        <button type="button" data-set="OFFLINE" aria-pressed="false">offline</button>
+      </div>
+    </div>
+
+  </header>
+
+  <div class="shell">
+
+    <!-- ══ NAV RAIL ══ -->
+    <nav class="rail" aria-label="Bề mặt">
+      <button class="rail-btn" data-surface="giao-tiep" aria-current="page" type="button">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3.2 4.6h13.6v8.2H8.1L4.4 16v-3.2H3.2z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+        <span class="rail-tip">Giao tiếp</span>
+      </button>
+      <button class="rail-btn" data-surface="nhiem-vu" type="button">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3.6 10.4l3.4 3.4 9.4-9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="rail-tip">Nhiệm vụ</span>
+      </button>
+      <button class="rail-btn" data-surface="he-thong" type="button">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="6.4" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 3.6v2.2M10 14.2v2.2M3.6 10h2.2M14.2 10h2.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="10" cy="10" r="1.7" fill="currentColor"/></svg>
+        <span class="rail-tip">Hệ thống</span>
+      </button>
+      <button class="rail-btn" data-surface="skill-plugin" type="button">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.8l7 7-7 7-7-7z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+        <span class="rail-tip">Skill / Plugin</span>
+      </button>
+      <div class="rail-sep"></div>
+      <button class="rail-btn runtime" type="button" id="runtimeSlot">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 5.4v9.2M5.4 10h9.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <span class="rail-tip">Mở rộng từ plugin lúc chạy</span>
+      </button>
+    </nav>
+
+    <!-- ══ PANEL DOCK — nhóm tab ══ -->
+    <aside class="dock" aria-label="Panel phụ">
+
+      <!-- Giao tiếp -->
+      <div class="dock-group" data-for="giao-tiep">
+        <div class="dock-tabs" role="tablist" aria-label="Panel giao tiếp">
+          <button class="dock-tab" role="tab" aria-selected="true" data-pane="gt-session" type="button">Phiên</button>
+          <button class="dock-tab" role="tab" aria-selected="false" data-pane="gt-receipt" type="button">Biên nhận</button>
+        </div>
+        <div class="dock-body" data-pane-body="gt-session">
+          <div class="dock-label">phiên đang mở</div>
+          <div class="row-item is-on">
+            <span class="row-dot ok"></span>đối chiếu mirror
+            <span class="row-sub">gần nhất · 2 phút trước</span>
+          </div>
+          <div class="row-item">
+            <span class="row-dot run"></span>soạn contract test
+            <span class="row-sub">đang chạy · 1 worker</span>
+          </div>
+          <div class="row-item">
+            <span class="row-dot wait"></span>rà soát weight pager
+            <span class="row-sub">chờ phiên sau</span>
+          </div>
+        </div>
+        <div class="dock-body" data-pane-body="gt-receipt" hidden>
+          <div class="dock-label">biên nhận gần nhất</div>
+          <div class="row-item">
+            <span class="row-dot ok"></span>fs.read · preflight.py
+            <span class="row-sub">tool-local · 14:02</span>
+          </div>
+          <div class="row-item">
+            <span class="row-dot ok"></span>đối chiếu mirror
+            <span class="row-sub">derived · 14:03</span>
+          </div>
+          <div class="row-item">
+            <span class="row-dot ok"></span>cautreo.recall
+            <span class="row-sub">cautreo · 14:03</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Nhiệm vụ -->
+      <div class="dock-group" data-for="nhiem-vu" hidden>
+        <div class="dock-tabs" role="tablist" aria-label="Panel nhiệm vụ">
+          <button class="dock-tab" role="tab" aria-selected="true" data-pane="nv-list" type="button">Danh sách</button>
+          <button class="dock-tab" role="tab" aria-selected="false" data-pane="nv-queue" type="button">Hàng đợi</button>
+        </div>
+        <div class="dock-body" data-pane-body="nv-list">
+          <div class="dock-label">3 việc trong phiên</div>
+          <div class="row-item is-on">
+            <span class="row-dot run"></span>đối chiếu mirror Vivy_final
+            <span class="row-sub">đang làm · bước 2/3</span>
+          </div>
+          <div class="row-item">
+            <span class="row-dot wait"></span>contract test cho tool.fs-read
+            <span class="row-sub">chờ duyệt</span>
+          </div>
+          <div class="row-item">
+            <span class="row-dot ok"></span>đóng receipt weight pager
+            <span class="row-sub">xong · 13:41</span>
+          </div>
+        </div>
+        <div class="dock-body" data-pane-body="nv-queue" hidden>
+          <div class="dock-label">hàng đợi</div>
+          <div class="row-item">
+            <span class="row-dot wait"></span>chạy lifecycle test ×100
+            <span class="row-sub">sau khi contract test xong</span>
+          </div>
+          <div class="row-item">
+            <span class="row-dot wait"></span>viết label provenance test
+            <span class="row-sub">chưa xếp</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hệ thống -->
+      <div class="dock-group" data-for="he-thong" hidden>
+        <div class="dock-tabs" role="tablist" aria-label="Panel hệ thống">
+          <button class="dock-tab" role="tab" aria-selected="true" data-pane="ht-src" type="button">Nguồn</button>
+          <button class="dock-tab" role="tab" aria-selected="false" data-pane="ht-rec" type="button">Biên nhận</button>
+        </div>
+        <div class="dock-body" data-pane-body="ht-src">
+          <div class="dock-label">3 nguồn đang đọc</div>
+          <div class="row-item">
+            <span class="row-dot ok"></span>preflight.py (2 bản)
+            <span class="row-sub">đọc để đối chiếu · Mắt</span>
+          </div>
+          <div class="row-item">
+            <span class="row-dot run"></span>cautreo_binding.py
+            <span class="row-sub">đang đọc · Mắt</span>
+          </div>
+          <div class="row-item">
+            <span class="row-dot ok"></span>spec desktop-ui
+            <span class="row-sub">đã nạp vào trí nhớ</span>
+          </div>
+        </div>
+        <div class="dock-body" data-pane-body="ht-rec" hidden>
+          <div class="dock-label">5 biên nhận gần nhất</div>
+          <div class="row-item">
+            <span class="row-dot ok"></span>rc-2f81 · fs.read
+            <span class="row-sub">tool-local · xem biên nhận</span>
+          </div>
+          <div class="row-item">
+            <span class="row-dot ok"></span>rc-2f82 · cautreo.recall
+            <span class="row-sub">cautreo · xem biên nhận</span>
+          </div>
+          <div class="row-item">
+            <span class="row-dot fail"></span>rc-2f83 · model.complete
+            <span class="row-sub">mất endpoint · đã chuyển degraded</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Skill / Plugin -->
+      <div class="dock-group" data-for="skill-plugin" hidden>
+        <div class="dock-tabs" role="tablist" aria-label="Panel skill plugin">
+          <button class="dock-tab" role="tab" aria-selected="true" data-pane="sp-reg" type="button">Đăng ký</button>
+          <button class="dock-tab" role="tab" aria-selected="false" data-pane="sp-swap" type="button">Thay nóng</button>
+        </div>
+        <div class="dock-body" data-pane-body="sp-reg">
+          <div class="dock-label">đang nạp</div>
+          <div class="row-item is-on">
+            <span class="row-dot ok"></span>vivy.runtime
+            <span class="row-sub">runtime · both · activated</span>
+          </div>
+          <div class="row-item">
+            <span class="row-dot ok"></span>tool.fs-read
+            <span class="row-sub">tool · eye · activated</span>
+          </div>
+          <div class="row-item">
+            <span class="row-dot ok"></span>tool.fs-write
+            <span class="row-sub">tool · hand · activated</span>
+          </div>
+        </div>
+        <div class="dock-body" data-pane-body="sp-swap" hidden>
+          <div class="dock-label">nhật ký thay nóng</div>
+          <div class="row-item">
+            <span class="row-dot ok"></span>tool.fs-read → 1.2.1
+            <span class="row-sub">deactivated → loaded → activated</span>
+          </div>
+          <div class="row-item">
+            <span class="row-dot ok"></span>vivy.runtime → 2.0.0
+            <span class="row-sub">đã nhả handle khi deactivate</span>
+          </div>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- ══ VÙNG NỘI DUNG ══ -->
+    <main class="content">
+
+      <!-- ─── 1 · GIAO TIẾP ─── -->
+      <section class="surface is-active" data-surface="giao-tiep">
+        <div class="content-head">
+          <h1>Giao tiếp</h1>
+          <p>Nói chuyện và giao việc cho ViVy</p>
+        </div>
+        <div class="content-tabs" role="tablist" aria-label="Nội dung giao tiếp">
+          <button class="content-tab" role="tab" aria-selected="true" data-pane="gt-main" type="button">Dòng suy nghĩ</button>
+          <button class="content-tab" role="tab" aria-selected="false" data-pane="gt-rules" type="button">Luật nguồn</button>
+        </div>
+
+        <div class="surface-scroll">
+          <div class="pane" data-pane-body="gt-main">
+            <p class="plate-note" id="streamNote" style="margin:0 0 16px;max-width:64ch">
+              Dòng dưới đây là dữ liệu mẫu để xem giao diện. Khi nối bus thật, mọi dòng đều do bus phát kèm nhãn nguồn — không có dòng nào do UI tự bịa.
+            </p>
+            <div class="stream" id="stream">
+
+              <article class="entry">
+                <div class="entry-meta">
+                  <span class="entry-kind">vivy_thought</span>
+                  <span class="src" data-src="model">model</span>
+                  <span class="entry-time">14:02:11</span>
+                </div>
+                <div class="entry-body">
+                  Hai bản <code>preflight.py</code> đang lệch nhau ở một chỗ. Tôi sẽ đọc cả hai, đối chiếu rồi mới nói lệch ở dòng nào.
+                </div>
+              </article>
+
+              <article class="entry is-tool">
+                <div class="entry-meta">
+                  <span class="entry-kind">tool.fs-read</span>
+                  <span class="src" data-src="tool-local">tool-local</span>
+                  <span class="entry-time">14:02:14</span>
+                </div>
+                <div class="entry-body">
+                  <code>vivy/training/preflight.py</code> · <code>vivyChatGPT/training/preflight.py</code> — đã đọc cả hai bản
+                </div>
+              </article>
+
+              <article class="entry">
+                <div class="entry-meta">
+                  <span class="entry-kind">vivy_thought</span>
+                  <span class="src" data-src="model">model</span>
+                  <span class="entry-time">14:02:19</span>
+                </div>
+                <div class="entry-body">
+                  Đúng một dòng khác nhau: bản trong <code>vivyChatGPT</code> còn giữ lời gọi <code>check_gate9()</code> mà bản mirror đã bỏ. Không có gì lệch ngoài chỗ đó.
+                </div>
+              </article>
+
+              <article class="entry">
+                <div class="entry-meta">
+                  <span class="entry-kind">cautreo.recall</span>
+                  <span class="src" data-src="cautreo">cautreo</span>
+                  <span class="entry-time">14:02:20</span>
+                </div>
+                <div class="entry-body">
+                  Trí nhớ gợi lại: thay đổi này được quyết trong phiên ngày 24/09 — “bỏ gate9 khỏi preflight vì đã có test riêng”.
+                </div>
+              </article>
+
+              <article class="entry">
+                <div class="entry-meta">
+                  <span class="entry-kind">suy ra từ 2 nguồn trên</span>
+                  <span class="src" data-src="derived">derived</span>
+                  <span class="entry-time">14:02:21</span>
+                </div>
+                <div class="entry-body">
+                  Hai nguồn cùng chỉ một hướng: bản mirror là bản đúng, bản <code>vivyChatGPT</code> là bản cũ chưa kịp đồng bộ.
+                </div>
+              </article>
+
+            </div>
+          </div>
+
+          <div class="pane" data-pane-body="gt-rules" hidden>
+            <div class="plate">
+              <h2>Mọi kết quả đều mang nhãn nguồn</h2>
+              <p class="plate-note">Nhãn do host gán tại bus, theo chỗ lời gọi đi ra. Plugin không tự gắn nhãn được — không có đường vòng.</p>
+              <dl class="kv">
+                <dt><span class="src" data-src="model">model</span></dt>
+                <dd>Sinh từ model thật. Khi mất model, không dòng nào được mang nhãn này.</dd>
+                <dt><span class="src" data-src="cautreo">cautreo</span></dt>
+                <dd>Đọc/ghi trực tiếp bộ nhớ Cautreo qua C-ABI.</dd>
+                <dt><span class="src" data-src="tool-local">tool-local</span></dt>
+                <dd>Tool cục bộ: đọc file, tra cứu, lệnh không cần model.</dd>
+                <dt><span class="src" data-src="derived">derived</span></dt>
+                <dd>Suy ra từ kết quả khác. Luôn ghi rõ đang dựa vào nguồn nào.</dd>
+              </dl>
+              <hr class="rule">
+              <h3>Biên nhận là đơn vị tin cậy</h3>
+              <p class="plate-note" style="margin:0">
+                UI hiển thị biên nhận — id, cơ quan, lệnh, kết quả, thời gian, nhãn nguồn. Không hiển thị lời tự nhận là đã làm.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="composer">
+          <p class="composer-hint" id="composerHint">
+            Lệnh đi qua bus → Python → Cautreo / model. Kết quả trả về luôn mang nhãn nguồn.
+          </p>
+          <div class="composer-row">
+            <textarea id="composerInput" rows="1" placeholder="Nhập chỉ thị cho ViVy…"></textarea>
+            <button class="send-btn" id="sendBtn" type="button">Gửi</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─── 2 · NHIỆM VỤ ─── -->
+      <section class="surface" data-surface="nhiem-vu">
+        <div class="content-head">
+          <h1>Nhiệm vụ</h1>
+          <p>Việc đang giao và tiến độ thật của chúng</p>
+        </div>
+        <div class="surface-scroll">
+
+          <div class="task is-on">
+            <div class="task-mark"> </div>
+            <div>
+              <div class="task-title">Đối chiếu mirror Vivy_final</div>
+              <div class="task-sub">
+                Bước 2/3 — đã đọc cả hai bản, đang chờ quyết giữ bản nào.<br>
+                <span class="src" data-src="tool-local">tool-local</span>
+                <span class="src" data-src="derived">derived</span>
+              </div>
+            </div>
+            <span class="tag" data-state="activated">đang làm</span>
+          </div>
+
+          <div class="task">
+            <div class="task-mark"> </div>
+            <div>
+              <div class="task-title">Contract test cho tool.fs-read</div>
+              <div class="task-sub">
+                Chốt manifest schema, version, và việc bus từ chối lời gọi thiếu quyền.<br>
+                <span class="src" data-src="tool-local">tool-local</span>
+              </div>
+            </div>
+            <span class="tag">chờ duyệt</span>
+          </div>
+
+          <div class="task is-done">
+            <div class="task-mark">✓</div>
+            <div>
+              <div class="task-title">Đóng receipt weight pager</div>
+              <div class="task-sub">
+                Đã có biên nhận đóng việc. Không có lời tự nhận nào được tính.<br>
+                <span class="src" data-src="cautreo">cautreo</span>
+              </div>
+            </div>
+            <span class="tag">xong</span>
+          </div>
+
+          <div class="plate" style="margin-top:18px">
+            <h3>Hàng đợi</h3>
+            <div class="task" style="margin:0">
+              <div class="task-mark"> </div>
+              <div>
+                <div class="task-title">Lifecycle test — nạp/tháo/hot-swap 100 lần</div>
+                <div class="task-sub">Chạy sau khi contract test xong. Mục tiêu: không rò handle ctypes, không sót surface.</div>
+              </div>
+              <span class="tag">chưa chạy</span>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ─── 3 · HỆ THỐNG ─── -->
+      <section class="surface" data-surface="he-thong">
+        <div class="content-head">
+          <h1>Hệ thống</h1>
+          <p>Đo lường cơ thể — chỉ hiển thị số do bus phát</p>
+        </div>
+        <div class="surface-scroll">
+
+          <div class="grid-2">
+            <div class="plate">
+              <h3>Sức sống</h3>
+              <p class="plate-note">Thanh chỉ hiển thị state do <code>vivy.runtime</code> phát trên bus — không tự quyết, không suy luận. Chưa nối bus nên chưa có số.</p>
+              <div class="meter">
+                <div class="meter-top"><span>ngữ cảnh</span><b>chưa có số liệu</b></div>
+                <div class="meter-track"><div class="meter-fill iris" style="width:0%"></div></div>
+              </div>
+              <div class="meter">
+                <div class="meter-top"><span>bộ nhớ Cautreo</span><b>chưa có số liệu</b></div>
+                <div class="meter-track"><div class="meter-fill" style="width:0%"></div></div>
+              </div>
+              <div class="meter">
+                <div class="meter-top"><span>trạng thái Tay</span><b>chưa có số liệu</b></div>
+                <div class="meter-track"><div class="meter-fill ochre" style="width:0%"></div></div>
+              </div>
+              <p class="plate-note" style="margin:12px 0 0">
+                Hai nơi cùng ghi state là hai nơi cùng sai.
+              </p>
+            </div>
+
+            <div class="plate">
+              <h3>Trạng thái liên kết</h3>
+              <div class="machine">
+                <span class="machine-node user">BOOTING</span>
+                <span class="machine-link">→</span>
+                <span class="machine-node user">LINKING</span>
+                <span class="machine-link">→</span>
+                <span class="machine-node live" id="mOnline">ONLINE</span>
+                <span class="machine-link">⇄</span>
+                <span class="machine-node bad" id="mDegraded">DEGRADED</span>
+                <span class="machine-link">↔</span>
+                <span class="machine-node user">OFFLINE</span>
+              </div>
+              <hr class="rule">
+              <dl class="kv">
+                <dt>DEGRADED</dt>
+                <dd>Hệ thống tự rơi vào khi mất năng lực, kèm lý do cụ thể.</dd>
+                <dt>OFFLINE</dt>
+                <dd>Người dùng tự chọn. Không có đường DEGRADED → OFFLINE.</dd>
+                <dt>phục hồi</dt>
+                <dd>Bus tự probe lại 5s + backoff. ONLINE trở lại thì mở composer, không cần restart app.</dd>
+              </dl>
+            </div>
+          </div>
+
+          <div class="plate">
+            <h3>Bản đồ thân thể</h3>
+            <p class="plate-note">
+              Tự dựng từ <code>PluginRegistry</code> — không phải mô tả viết tay.
+              Đổi registry là bản đồ đổi theo, và cùng một bản đồ đó được nạp vào
+              system prompt cho ViVy.
+            </p>
+            <div class="body-map" id="bodyMap">
+              <p class="plate-note">Chưa nối bus nên chưa có bản đồ. Đây là dòng
+                trung thực, không phải bản đồ mẫu.</p>
+            </div>
+          </div>
+
+          <div class="plate">
+            <h3>Biên nhận</h3>
+            <p class="plate-note">Đo bằng biên nhận, không đo bằng lời.</p>
+            <table class="receipts">
+              <thead>
+                <tr>
+                  <th>id</th>
+                  <th>cơ quan</th>
+                  <th>lệnh</th>
+                  <th>kết quả</th>
+                  <th>nhãn nguồn</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="id">rc-2f81</td>
+                  <td>Mắt</td>
+                  <td><b>fs.read</b> preflight.py</td>
+                  <td>đã đọc — xem kết quả ở dòng suy nghĩ</td>
+                  <td><span class="src" data-src="tool-local">tool-local</span></td>
+                </tr>
+                <tr>
+                  <td class="id">rc-2f82</td>
+                  <td>Mắt</td>
+                  <td><b>cautreo.recall</b> “gate9 preflight”</td>
+                  <td>trả về ký ức khớp</td>
+                  <td><span class="src" data-src="cautreo">cautreo</span></td>
+                </tr>
+                <tr>
+                  <td class="id">rc-2f83</td>
+                  <td>—</td>
+                  <td><b>model.complete</b> so sánh 2 bản</td>
+                  <td>không sinh kết quả — mất endpoint</td>
+                  <td><span class="src" data-src="derived">derived</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ─── 4 · SKILL / PLUGIN ─── -->
+      <section class="surface" data-surface="skill-plugin">
+        <div class="content-head">
+          <h1>Skill / Plugin</h1>
+          <p>Thiết kế hệ sinh thái cơ quan của cơ thể</p>
+        </div>
+        <div class="content-tabs" role="tablist" aria-label="Nội dung skill plugin">
+          <button class="content-tab" role="tab" aria-selected="true" data-pane="sp-manifest" type="button">Manifest</button>
+          <button class="content-tab" role="tab" aria-selected="false" data-pane="sp-contract" type="button">Hai mặt contract</button>
+          <button class="content-tab" role="tab" aria-selected="false" data-pane="sp-life" type="button">Vòng đời</button>
+        </div>
+
+        <div class="surface-scroll">
+          <div class="pane" data-pane-body="sp-manifest">
+
+            <div class="reg-item">
+              <div class="reg-id">vivy.runtime<span class="row-sub">api 1 · 2.0.0 · đăng ký surface và tool động</span></div>
+              <span class="tag" data-organ="both">both</span>
+              <span class="tag" data-state="activated">activated</span>
+            </div>
+            <div class="reg-item">
+              <div class="reg-id">tool.fs-read<span class="row-sub">api 1 · 1.2.1 · đọc trong workspace</span></div>
+              <span class="tag" data-organ="eye">eye</span>
+              <span class="tag" data-state="activated">activated</span>
+            </div>
+            <div class="reg-item">
+              <div class="reg-id">tool.fs-write<span class="row-sub">api 1 · 0.9.0 · ghi trong workspace</span></div>
+              <span class="tag" data-organ="hand">hand</span>
+              <span class="tag" data-state="activated">activated</span>
+            </div>
+            <div class="reg-item">
+              <div class="reg-id">boot.model-loader<span class="row-sub">api 1 · 1.0.3 · bắt tay endpoint lúc boot</span></div>
+              <span class="tag" data-organ="eye">eye</span>
+              <span class="tag" data-state="loaded">loaded</span>
+            </div>
+
+            <div class="plate" style="margin-top:18px">
+              <h3>plugin.toml của tool.fs-read</h3>
+              <pre class="manifest"><span class="c"># mỗi plugin một thư mục</span>
+[<span class="k">plugin</span>]
+<span class="k">id</span>      = <span class="s">"tool.fs-read"</span>   <span class="c"># namespace.bắt-buộc</span>
+<span class="k">version</span> = <span class="s">"1.2.1"</span>
+<span class="k">api</span>     = <span class="n">1</span>
+<span class="k">kind</span>    = <span class="s">"tool"</span>          <span class="c"># workspace | panel | tool | runtime</span>
+<span class="k">organ</span>   = <span class="s">"eye"</span>          <span class="c"># eye | hand | both — bắt buộc với tool/runtime</span>
+
+[<span class="k">entry</span>]
+<span class="k">logic</span> = <span class="s">"logic/main.py"</span>  <span class="c"># mặt Python</span>
+
+[<span class="k">permissions</span>]
+<span class="k">grant</span> = [<span class="s">"fs.workspace.read"</span>]</pre>
+              <p class="plate-note" style="margin:12px 0 0">
+                Thiếu <code>organ</code> ở tool/runtime → <code>validated</code> thất bại, không nạp. Plugin không xin quyền thì không có quyền.
+              </p>
+            </div>
+
+          </div>
+
+          <div class="pane" data-pane-body="sp-contract" hidden>
+            <div class="plate">
+              <h2>Hai mặt qua một contract</h2>
+              <p class="plate-note">Một plugin mang cả hai mặt hoặc chỉ một mặt; host không ép.</p>
+              <div class="contract">
+                <span class="contract-node js">mặt JS / TS<br>đăng ký surface</span>
+                <span class="contract-arrow">→</span>
+                <span class="contract-node bus">IPC Bus<br>JSON-RPC / WS</span>
+                <span class="contract-arrow">→</span>
+                <span class="contract-node py">mặt Python<br>model · C-ABI · tool</span>
+              </div>
+              <p class="contract-cap">
+                Mặt JS không có đường gọi thẳng Python. Mọi việc đi qua host làm trung gian, và host gán nhãn nguồn tại đó.
+                Python chạy in-process — <code>cautreo_binding.py</code> là C-ABI direct memory, đẩy ra subprocess là tự cắt đường vào Cautreo.
+              </p>
+            </div>
+
+            <div class="plate">
+              <h3>Host không biết ViVy là gì</h3>
+              <p class="plate-note" style="margin:0">
+                Muốn thêm loại plugin mới → viết plugin, không sửa host. Đổi backend model → thay một plugin Python, bốn bề mặt không sứt mẻ. Thay UI hoàn toàn → thay mặt JS, logic giữ nguyên.
+              </p>
+            </div>
+          </div>
+
+          <div class="pane" data-pane-body="sp-life" hidden>
+            <div class="plate">
+              <h2>Vòng đời và thay nóng</h2>
+              <div class="machine" style="margin:14px 0 4px">
+                <span class="machine-node">discovered</span>
+                <span class="machine-link">→</span>
+                <span class="machine-node">validated</span>
+                <span class="machine-link">→</span>
+                <span class="machine-node">loaded</span>
+                <span class="machine-link">→</span>
+                <span class="machine-node live">activated</span>
+                <span class="machine-link">⇄</span>
+                <span class="machine-node">deactivated</span>
+                <span class="machine-link">→</span>
+                <span class="machine-node">unloaded</span>
+              </div>
+              <hr class="rule">
+              <dl class="kv">
+                <dt>loaded</dt>
+                <dd>Code vào bộ nhớ, chưa đăng ký gì.</dd>
+                <dt>activated</dt>
+                <dd>Surface đã đăng ký, method đã gọi được.</dd>
+                <dt>deactivated</dt>
+                <dd>Gỡ surface, đông băng state. Phải nhả mọi tài nguyên đang giữ — handle ctypes, kết nối, timer.</dd>
+                <dt>thay nóng</dt>
+                <dd>deactivated → unloaded → loaded → activated trên plugin mới. Lệnh đang bay nhận lỗi <code>plugin_reloading</code>, không làm sập host.</dd>
+              </dl>
+              <hr class="rule">
+              <p class="plate-note" style="margin:0">
+                Không có process boundary nào cứu được nếu <code>deactivate()</code> quên nhả handle — vì Python chạy in-process. Nên quy tắc đó là bắt buộc, không phải lời khuyên.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
