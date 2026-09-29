@@ -551,7 +551,7 @@
     if (streamNote) streamNote.textContent = live ? LIVE_NOTE : SAMPLE_NOTE;
     if (live) {
       composerHint.textContent =
-        "Nối bus thật rồi. Lệnh: đọc <path> · ghi <path> <nội dung> · tra <khoá> · hoặc tên method. Còn lại coi là lời nói với ViVy — hỏi thẳng model, kết quả mang nhãn nguồn do host gán.";
+        "Nối bus thật rồi. Lệnh: help · đọc <path> · ghi <path> <nội dung> · hỏi <prompt> · tra <khoá> · hoặc tên method. Còn lại coi là lời nói với ViVy — hỏi thẳng model, kết quả mang nhãn nguồn do host gán.";
     }
   }
 
@@ -564,6 +564,7 @@
   function routeCommand(text) {
     var t = text.trim();
     var m;
+    if (/^(help|giúp|\?)$/i.exec(t)) return { method: "vivy.runtime/help", params: {} };
     if ((m = /^đọc\s+(.+)$/i.exec(t))) return { method: "tool.fs-read", params: { path: m[1].trim() } };
     if ((m = /^ghi\s+(\S+)\s+([\s\S]*)$/i.exec(t))) return { method: "tool.fs-write", params: { path: m[1], text: m[2] } };
     if ((m = /^hỏi\s+([\s\S]+)$/i.exec(t))) return { method: "vivy.runtime/ask", params: { prompt: m[1].trim() } };

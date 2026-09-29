@@ -67,6 +67,7 @@ class Plugin:
         "ask": ["model.connect"],
         "recall": ["cautreo.access"],
         "digest": ["model.connect", "cautreo.access"],
+        "help": [],
     }
 
     def activate(self, api: Any = None) -> None:
@@ -75,10 +76,70 @@ class Plugin:
         api.register_method("ask", self.ask)
         api.register_method("recall", self.recall)
         api.register_method("digest", self.digest)
+        api.register_method("help", self.help)
 
     def deactivate(self) -> None:
         # Không giữ tài nguyên nào, nhưng hook phải có mặt để vòng đời trọn vẹn.
         return None
+
+    def help(self, ctx: Any = None, **params: Any) -> dict[str, Any]:
+        """Hướng dẫn lệnh — liệt kê API có thật, không bịa kết quả nghiệp vụ.
+
+        `help` chỉ mô tả method/verb đã đăng ký. Không cần model, không cần
+        cautreo backend. Không sinh câu trả lời thay ViVy.
+        """
+        topic = params.get("topic")
+        verbs = [
+            {"verb": "đọc <path>", "method": "tool.fs-read", "note": "đọc file trong workspace"},
+            {"verb": "ghi <path> <nội dung>", "method": "tool.fs-write", "note": "ghi file trong workspace"},
+            {"verb": "hỏi <prompt>", "method": "vivy.runtime/ask", "note": "hỏi model (cần model.connect)"},
+            {"verb": "tra <key>", "method": "vivy.runtime/recall", "note": "tra trí nhớ (cần cautreo.access)"},
+            {"verb": "help", "method": "vivy.runtime/help", "note": "hướng dẫn này"},
+        ]
+        plugin_methods = [
+            {"method": "vivy.runtime/ask", "grants": ["model.connect"]},
+            {"method": "vivy.runtime/recall", "grants": ["cautreo.access"]},
+            {"method": "vivy.runtime/digest", "grants": ["model.connect", "cautreo.access"]},
+            {"method": "vivy.runtime/help", "grants": []},
+        ]
+        host_methods = [
+            {"method": "host.body-map", "note": "bản đồ thân thể / method đang đăng ký"},
+            {"method": "host.knowledge-graph", "note": "biểu đồ tri thức"},
+            {"method": "host.link-probe", "note": "thăm dò lại link model"},
+        ]
+        if isinstance(topic, str) and topic.strip():
+            key = topic.strip().lower()
+            for row in verbs + [{"verb": h["method"], "method": h["method"], "note": h["note"]} for h in host_methods]:
+                if key in row.get("verb", "").lower() or key in row.get("method", "").lower():
+                    return {
+                        "summary": f"hướng dẫn {topic.strip()}",
+                        "answer": f"{row.get('verb', row.get('method'))} → {row['method']} — {row.get('note', '')}",
+                        "topic": topic.strip(),
+                    }
+            return {
+                "summary": f"không có hướng dẫn cho {topic.strip()}",
+                "answer": f"Không tìm thấy lệnh/method khớp `{topic.strip()}`. Gõ `help` để xem danh sách.",
+                "topic": topic.strip(),
+            }
+        lines = [
+            "Lệnh nhập nhanh:",
+            *[f"  {v['verb']} → {v['method']}" for v in verbs],
+            "",
+            "Method vivy.runtime:",
+            *[f"  {m['method']}" for m in plugin_methods],
+            "",
+            "Method host:",
+            *[f"  {h['method']} — {h['note']}" for h in host_methods],
+            "",
+            "Gọi method có namespace: tên.method {json}",
+        ]
+        return {
+            "summary": "hướng dẫn lệnh",
+            "answer": "\n".join(lines),
+            "verbs": verbs,
+            "methods": plugin_methods,
+            "host_methods": host_methods,
+        }
 
     def ask(self, ctx: Any = None, **params: Any) -> dict[str, Any]:
         prompt = params.get("prompt")
