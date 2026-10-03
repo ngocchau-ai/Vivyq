@@ -191,3 +191,16 @@ Có tune lr đồng đều (lưới `5e-4, 2e-3, 8e-3`, 3 lần thử/arm, chọ
 - H2 (MLP) cao nhất nhưng chênh H1/H3 nhỏ (CI chồng lấn một phần). Mọi arm chỉ ~0.16–0.19 so với prior 0.10; khoảng cách lớn val (~0.39) → test OOD (~0.17) cho thấy **không khái quát hóa sang đồ thị dày**.
 - Chưa kết luận về H5/H6 (chưa dựng). Manifest `commit` = `5a7d4a9` nhưng `run_s2.py` phiên bản có H3/H4 chưa commit lúc chạy [GHI CHÚ].
 - Lịch sử: 2026-10-03 | Antigravity (Claude Sonnet 5.5) | §8.9 ACC-1 tạm thời.
+
+### 8.10 Kết quả S2b HOÀN CHỈNH — ACC-1..3 (2026-10-03) `[PROTOTYPE]` (thay phần `[TẠM THỜI]` ở §8.9; §8.9 giữ nguyên làm lịch sử)
+Có tune lr đồng đều (3 lần thử/arm, chọn trên val seed 0; hầu hết chọn lr=8e-3 = biên lưới → có thể chưa tối ưu). 5 seed, CI95 gộp 2500 mẫu test. Vi phạm mask = 0 ở mọi arm/tác vụ. Raw: `results/acc_s2b_acc{1,2,3}.json`, `results/acc_s2_tune_acc{1,2,3}.json`; `pytest tests`: 108 passed.
+| top-1 gộp (CI95) | H0 prior | H1 linear | H2 MLP | H3 E9+rotor | H4 E9 bỏ rotor | H3−H4 ghép cặp [CI95] |
+|---|---|---|---|---|---|---|
+| ACC-1 | 0.102 | 0.172 | **0.194** | 0.168 | 0.157 | +0.011 [−0.007, +0.029] |
+| ACC-2 | 0.060 | 0.292 | 0.218 | 0.299 | **0.306** | −0.008 [−0.022, +0.007] |
+| ACC-3 | 0.003 | 0.003 | 0.002 | 0.002 | 0.005 | −0.003 [−0.006, −0.0004] |
+- **Kết luận theo §4 (khóa trước):** H3 không thắng H4 ở bất kỳ bài nào → `[ROTOR DƯ THỪA]` (trên P5, CPU, ≤2500 mẫu/bài). ACC-3 cho CI không chứa 0 nhưng ngược chiều có lợi H4 và cả hai ~ngẫu nhiên (0.2% vs 0.5%) — không có ý nghĩa thực tiễn. Đề xuất **cô lập (không xóa)** phần rotor khỏi đường chính của Core; chờ chủ dự án quyết định.
+- ACC-3: mọi arm ≈ prior (≈ngẫu nhiên): hidden/latent P5 + 4 arm đều không học được logarit rời rạc OOD — đúng kỳ vọng §2 (kết quả hợp lệ, đo ranh giới).
+- ACC-1: MLP nhỉnh hơn nhóm tuyến tính; ACC-2: nhóm tuyến tính/E9 thắng MLP rõ. Không có arm nào thống trị cả hai bài. Val→test OOD tụt mạnh ở ACC-1 (~0.39→~0.17).
+- **Hạn chế:** chưa có H5/H6 → **chưa thể kết luận gì về giả thuyết qudit**. H3 ở đây là bản NumPy train được (mặt phẳng rotor = E9), không phải DLL Core. Manifest ACC-1 ghi commit 5a7d4a9, ACC-2/3 ghi c443878 (code đã commit). Latent là P5 (tổng hợp), chưa dùng hidden-state LLM.
+- Lịch sử: 2026-10-03 | Antigravity (Claude Sonnet 5.5) | §8.10 kết quả hoàn chỉnh.
