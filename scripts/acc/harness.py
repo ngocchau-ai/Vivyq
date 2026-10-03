@@ -180,6 +180,66 @@ class E9CoreArm:
         return g
 
 
+# ---------- H5 / H6: mô hình factor có cấu trúc (2026-10-04, pre-register §8.12) ----------
+from itertools import combinations  # noqa: E402
+
+
+def _site_states(n_sites: int, n_states: int) -> np.ndarray:
+    """(4096, n_sites): trạng thái từng site của ứng viên k. 6x4 -> qudit (base 4), 12x2 -> qubit (bit)."""
+    bits = int(np.log2(n_states))
+    k = np.arange(N_CAND)
+    return np.stack([(k >> (bits * i)) & (n_states - 1) for i in range(n_sites)], axis=1)
+
+
+def factor_incidence(n_sites: int, n_states: int, orders) -> np.ndarray:
+    """G (M, 4096) 0/1: logit_k = sum_f out[f, local(k)] = (out @ G)[k]. Factor = tập con site có kích thước ∈ orders."""
+    st = _site_states(n_sites, n_states)
+    rows = []
+    for o in orders:
+        for subset in combinations(range(n_sites), o):
+            local = np.zeros(N_CAND, dtype=np.int64)
+            for s in subset:
+                local = local * n_states + st[:, s]
+            block = np.zeros((n_states ** o, N_CAND), np.float32)
+            block[local, np.arange(N_CAND)] = 1.0
+            rows.append(block)
+    return np.concatenate(rows, 0)
+
+
+FACTOR_SPECS = {
+    # tên arm: (n_sites, n_states, orders, rank r) — r chọn để số tham số ≈ H3 (528 392) ±1%
+    "H5_qudit_additive": (6, 4, (1,), 128),       # tương hỗ cộng tính (chỉ unary) -> mốc cho Δ_interaction
+    "H5_qudit_interact": (6, 4, (1, 2, 3), 93),   # tương hỗ-có-cổng: cặp + bộ ba qudit
+    "H6_qubit_interact": (12, 2, (1, 2, 3), 86),  # cùng cấu trúc trên 12 qubit -> tách 'qudit' khỏi 'tensor'
+}
+
+
+class FactorArm:
+    """z -> h = z A (rank r) -> bảng factor out = h B + c (M) -> logits = out @ G (G cố định, không học)."""
+
+    def __init__(self, name: str, seed=0):
+        n_sites, n_states, orders, r = FACTOR_SPECS[name]
+        self.name = name
+        self.G = factor_incidence(n_sites, n_states, orders)
+        m = self.G.shape[0]
+        rng = np.random.default_rng(seed + 3)
+        self.p = {"A": (rng.standard_normal((N_CAND, r)) / np.sqrt(N_CAND)).astype(np.float32),
+                  "B": (rng.standard_normal((r, m)) / np.sqrt(r * self.G.sum(0).mean())).astype(np.float32),
+                  "c": np.zeros(m, np.float32)}
+
+    def n_params(self):
+        return sum(v.size for v in self.p.values())
+
+    def forward(self, z):
+        h = z @ self.p["A"]
+        out = h @ self.p["B"] + self.p["c"]
+        return out @ self.G, h
+
+    def grads(self, z, dlog, h):
+        dout = dlog @ self.G.T
+        return {"c": dout.sum(0), "B": h.T @ dout, "A": z.T @ (dout @ self.p["B"].T)}
+
+
 def train_model(model, ztr, mtr, ctr, zva, mva, cva, epochs=200, lr=2e-3, eval_every=10):
     """Full-batch Adam; giữ tham số tốt nhất theo val top-1. Trả về log (epoch, loss, val_acc)."""
     opt = _Adam(model.p, lr)

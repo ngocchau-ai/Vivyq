@@ -1,4 +1,4 @@
-# Changelog: 2026-10-03 | Antigravity (Claude Sonnet 5.5) | Tạo mới — test harness S2 (gradient, mask, khớp tham số, tái lập, rò rỉ split)
+﻿# Changelog: 2026-10-03 | Antigravity (Claude Sonnet 5.5) | Tạo mới — test harness S2 (gradient, mask, khớp tham số, tái lập, rò rỉ split)
 import sys
 from pathlib import Path
 
@@ -138,3 +138,50 @@ def test_rotors_preserve_norm_and_zero_angle_equals_no_rotor():
     assert np.allclose(h3.forward(z)[0], h4.forward(z)[0], atol=1e-5)
     assert h3.n_params() - h4.n_params() == 8
     assert abs(H.MLP(h3.n_params(), 0).n_params() - h3.n_params()) / h3.n_params() < 0.05
+
+
+# ---------- H5/H6 (2026-10-04) ----------
+def test_factor_incidence_matches_bruteforce_definition():
+    G = H.factor_incidence(6, 4, (1, 2))
+    assert G.shape == (24 + 15 * 16, N_CAND)
+    assert np.all(G.sum(0) == 6 + 15)            # mỗi ứng viên chạm đúng 1 ô / factor
+    from acc.common import decode
+    k = 1234
+    c = decode(k)                                 # qudit i = (k // 4**i) % 4
+    on = set(np.flatnonzero(G[:, k]).tolist())
+    assert {i * 4 + c[i] for i in range(6)} <= on  # unary ô đúng trạng thái
+    Gq = H.factor_incidence(12, 2, (1,))
+    assert all(Gq[j * 2 + ((k >> j) & 1), k] == 1 for j in range(12))
+
+
+@pytest.mark.parametrize("name", list(H.FACTOR_SPECS))
+def test_factor_arm_params_matched_and_gradient(name):
+    m = H.FactorArm(name, 0)
+    ref = H.E9CoreArm(True, 0).n_params()
+    assert abs(m.n_params() - ref) / ref < 0.01, (m.n_params(), ref)
+    z, mk, c = _small_batch(n=4)
+    m.p["B"] *= 5  # ×20 làm logit bão hòa -> loss bị kẹp log(1e-30), sai phân hữu hạn mất nghĩa
+    logits, cache = m.forward(z)
+    _, dlog = H._masked_softmax_loss(logits, mk, c)
+    g = m.grads(z, dlog.astype(np.float32), cache)
+    for key, idx in (("B", (3, 7)), ("A", (11, 5)), ("c", (2,))):
+        e = 1e-2
+        w0 = m.p[key][idx]
+        m.p[key][idx] = w0 + e
+        lp = H._masked_softmax_loss(m.forward(z)[0], mk, c)[0]
+        m.p[key][idx] = w0 - e
+        lm = H._masked_softmax_loss(m.forward(z)[0], mk, c)[0]
+        m.p[key][idx] = w0
+        assert (lp - lm) / (2 * e) == pytest.approx(float(g[key][idx]), rel=5e-2, abs=2e-3)
+
+
+def test_additive_arm_cannot_express_pairwise_coupling():
+    """Δ_interaction có nghĩa: arm chỉ-unary không biểu diễn được hàm 'hai qudit bằng nhau'."""
+    G = H.factor_incidence(6, 4, (1,))
+    from acc.common import DIGITS
+    target = (DIGITS[:, 0] == DIGITS[:, 1]).astype(float)
+    coef, *_ = np.linalg.lstsq(G.T, target, rcond=None)
+    assert np.abs(G.T @ coef - target).max() > 0.2
+    G2 = H.factor_incidence(6, 4, (1, 2))
+    coef2, *_ = np.linalg.lstsq(G2.T, target, rcond=None)
+    assert np.abs(G2.T @ coef2 - target).max() < 1e-6

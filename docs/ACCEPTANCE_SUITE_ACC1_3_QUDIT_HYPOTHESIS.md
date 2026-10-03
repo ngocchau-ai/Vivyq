@@ -117,6 +117,7 @@ Quy tắc: tham số của H2/H5/H6 phải khớp H3 ±5% (báo cáo số thực
 ## Lịch sử thay đổi
 - 2026-10-03 | Antigravity (Claude Sonnet 5.5) | Tạo mới: bộ nghiệm thu ACC-1..3, pipeline hidden-state + phương án dự phòng, tiêu chí pre-register. Lý do: benchmark E0/E9 vòng tròn (review 2026-10-03).
 - 2026-10-03 | Antigravity (Claude Sonnet 5.5) | Revision #2 (§8): phân pha qubit-trước, arm tương hỗ, mô hình Gemma chạy CPU, chọn ACC-2 quantum extension ở cuối pha Q1. Lý do: quyết định chủ dự án 18:43. §0–§7 giữ nguyên; điểm bị thay thế ghi rõ trong §8.
+- 2026-10-04 | Antigravity (Claude Opus 5.5) | §8.11 cô lập rotor; §8.12 pre-register H5/H6 + Δ_interaction (tiêu chí khóa bằng code trước khi chạy). Lý do: chủ dự án duyệt 2026-10-04 05:54.
 
 ## 8. REVISION #2 (2026-10-03) — theo quyết định chủ dự án
 
@@ -212,3 +213,22 @@ Có tune lr đồng đều (3 lần thử/arm, chọn trên val seed 0; hầu h�
 - **Rủi ro / đánh đổi:** `adapt_torque` ở ISOLATED p50 **274 µs** (LEGACY 31.6 µs) vì mỗi bước phải tính lại `W_c_active` (64×8×1024 phép quay vô hướng). Vẫn dưới ngưỡng test 500 µs, nhưng dòng in “SLA < 60 µs” của `test_hamiltonian_torque_descent` báo FAIL ở ISOLATED. Khuyến nghị: phiên thích nghi online dùng `legacy`. `[HIỆU NĂNG — CHƯA TỐI ƯU]` backlog: vector hóa refresh hoặc cập nhật lười.
 - Working set tăng 1 MiB (thêm `W_c_active`); đường nóng ISOLATED vẫn chỉ đọc `W_c_active` + codebook (~2 MiB).
 - Lịch sử: 2026-10-04 | Antigravity (Claude Opus 5.5) | §8.11 cô lập rotor.
+
+### 8.12 PRE-REGISTER H5/H6 + Δ_interaction (2026-10-04, chủ dự án duyệt) `[KHÓA TRƯỚC KHI CHẠY — commit này có trước mọi lần chấm test của H5/H6]`
+**Arm** (mã: `scripts/acc/harness.py::FactorArm`, `FACTOR_SPECS`). Chung: `z (4096) → h = zA (rank r) → bảng factor out = hB + c (M) → logits = out·G`, `G` (M×4096) là ma trận 0/1 cố định (không học) nối ứng viên với ô trạng thái cục bộ của từng factor. Factor = tập con site có kích thước thuộc `orders`.
+| Arm | Site × trạng thái | orders | r | M | Params (lệch so H3 528 392) | Vai trò |
+|---|---|---|---|---|---|---|
+| `H5_qudit_additive` | 6 qudit × 4 | (1) | 128 | 24 | 527 384 (−0.19%) | Tương hỗ **cộng tính** (chỉ unary) — mốc cho Δ_interaction |
+| `H5_qudit_interact` | 6 qudit × 4 | (1,2,3) | 93 | 1 544 | 526 064 (−0.44%) | **H5** — tương hỗ-có-cổng: cặp + bộ ba qudit |
+| `H6_qubit_interact` | 12 qubit × 2 | (1,2,3) | 86 | 2 048 | 530 432 (+0.39%) | **H6** — cùng cấu trúc trên qubit, tách "qudit" khỏi "tensor" |
+
+**Quy trình (giống hệt S2b):** P5, n = 2000/500/500, 200 epoch, full-batch Adam, giữ checkpoint tốt nhất theo val; lưới lr `5e-4, 2e-3, 8e-3`, đúng 3 lần thử/arm, chọn trên val seed 0 (`--suite s2c --tune` → `results/acc_s2c_tune_{task}.json`); 5 seed (0–4); test OOD chấm **1 lần**/arm/seed (`results/acc_s2c_{task}.json`). Không mở rộng lưới kể cả khi chọn biên (cùng ngân sách như H1–H4). H0–H4 **tái dùng** từ `results/acc_s2b_*.json`; điều kiện: `dataset_sha` từng seed phải trùng (đã kiểm seed 0 cả 3 bài: khớp).
+
+**Tiêu chí (khóa bằng code `scripts/acc/analyze_s2c.py`, test `tests/test_acc_analyze_s2c.py`):**
+- **C1 — H5 được ủng hộ (phạm vi P5/Q1):** trên test OOD, CI95 gộp (bootstrap 2000, 2500 mẫu) top-1 của `H5_qudit_interact` nằm **hoàn toàn trên** CI95 gộp của **từng** arm H1, H2, H4, H6, và H5 có 0 vi phạm mask; đạt ở **≥ 2/3** bài. Ghi chú: chỉ dùng top-1 — **chặt hơn** §4 (bỏ nhánh "hoặc regret"); quyết định trước khi thấy dữ liệu. Theo §4, kết quả trên P5 thỏa vế "G-ENC pass hoặc cùng kết quả trên P5"; lần chạy lại trên hidden-state thật (S4) báo cáo riêng.
+- **C2 — tương tác có đóng góp:** `Δ_interaction` = hiệu **ghép cặp theo mẫu** `H5_qudit_interact − H5_qudit_additive`; đóng góp khi cận dưới CI95 > 0 ở **≥ 2/3** bài. Nếu không → ghi `[TƯƠNG TÁC KHÔNG ĐÓNG GÓP NGOÀI CỘNG TÍNH]`.
+- **C3 — chỉ báo cáo:** `Δ_qudit = H5_qudit_interact − H6_qubit_interact` ghép cặp (CI95).
+- **Hệ quả khóa trước:** C1 fail → README ghi `[GIẢ THUYẾT QUDIT CHƯA ĐƯỢC ỦNG HỘ — P5/Q1]` và chuyển Pha Q2 (§8.2) chỉ thiết kế biến thể từ chỗ thất bại; C1 pass → chưa tuyên bố chung, phải lặp lại trên hidden-state thật (S4) với cùng tiêu chí.
+- **Rủi ro đã biết trước khi chạy:** ACC-3 mọi arm ≈ ngẫu nhiên ở S2b → nhiều khả năng ACC-3 không đạt C1/C2 với bất kỳ arm nào; vì vậy C1/C2 thực tế phải đạt ở cả ACC-1 **và** ACC-2.
+- Lịch sử: 2026-10-04 | Antigravity (Claude Opus 5.5) | §8.12 pre-register H5/H6.
+

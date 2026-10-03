@@ -1,8 +1,10 @@
 # Changelog: 2026-10-03 | Antigravity (Claude Sonnet 5.5) | Tạo mới — S2 runner: chạy arm H0/H1/H2/H7 trên P5, xuất bảng + manifest
 # Changelog: 2026-10-03 | Antigravity (Claude Sonnet 5.5) | Revision: thêm H3/H4, tune lr đồng đều (--tune), CI95 gộp theo mẫu
+# Changelog: 2026-10-04 | Antigravity (Claude Opus 5.5) | Thêm --suite s2c (H5/H6, pre-register spec §8.12); s2b giữ nguyên hành vi + tên file
 """Chạy:
   python scripts/acc/run_s2.py --task acc1 --tune          # chọn lr/arm trên VAL của seed 0 (lưới chung 3 giá trị)
   python scripts/acc/run_s2.py --task acc1 --seeds 5 --out results/acc_s2b_acc1.json   # dùng lr đã tune
+  python scripts/acc/run_s2.py --suite s2c --task acc1 --tune / --out results/acc_s2c_acc1.json   # H5/H6
 Test (OOD) chỉ được chấm MỘT lần/arm/seed, sau khi train xong. Lưới lr và số lần thử giống nhau cho mọi arm."""
 from __future__ import annotations
 
@@ -43,13 +45,22 @@ def sha_arrays(*arrs):
     return h.hexdigest()
 
 
-def arm_factories(ref_params):
+SUITES = ("s2b", "s2c")
+
+
+def arm_factories(ref_params, suite="s2b"):
+    if suite == "s2c":
+        return {n: (lambda s, n=n: H.FactorArm(n, s)) for n in H.FACTOR_SPECS}
     return {
         "H1_linear_rank64": lambda s: H.LinearRank(64, s),
         "H2_mlp_param_matched": lambda s: H.MLP(ref_params, s),
         "H3_e9_core": lambda s: H.E9CoreArm(True, s),
         "H4_e9_no_rotor": lambda s: H.E9CoreArm(False, s),
     }
+
+
+def tune_file(task, suite):
+    return RESULTS / (f"acc_s2_tune_{task}.json" if suite == "s2b" else f"acc_{suite}_tune_{task}.json")
 
 
 def load_data(task, seed, ntr, nva, nte):
@@ -62,12 +73,12 @@ def load_data(task, seed, ntr, nva, nte):
                 ztr=p5(ftr), zva=p5(fva), zte=p5(fte))
 
 
-def tune(task, ntr, nva, nte, epochs):
+def tune(task, ntr, nva, nte, epochs, suite="s2b"):
     """Chọn lr cho từng arm trên VAL (seed 0). Không chạm test."""
     d = load_data(task, 0, ntr, nva, nte)
     ref = H.LinearRank(64, 0).n_params()
     best = {}
-    for name, mk in arm_factories(ref).items():
+    for name, mk in arm_factories(ref, suite).items():
         trials = []
         for lr in LR_GRID:
             m = mk(0)
@@ -78,16 +89,16 @@ def tune(task, ntr, nva, nte, epochs):
         b = max(trials, key=lambda t: t["val_top1"])
         best[name] = {"lr": b["lr"], "val_top1": b["val_top1"], "trials": trials}
     RESULTS.mkdir(exist_ok=True)
-    (RESULTS / f"acc_s2_tune_{task}.json").write_text(json.dumps(best, indent=1), encoding="utf-8")
+    tune_file(task, suite).write_text(json.dumps(best, indent=1), encoding="utf-8")
     return best
 
 
-def run_seed(task, seed, ntr, nva, nte, epochs, lrs):
+def run_seed(task, seed, ntr, nva, nte, epochs, lrs, suite="s2b"):
     t0 = time.time()
     d = load_data(task, seed, ntr, nva, nte)
     ref = H.LinearRank(64, seed).n_params()
     res = {"seed": seed, "dataset_sha": sha_arrays(d["fte"], d["cte"]), "arms": {}}
-    arms = [H.Prior(d["ctr"])] + [mk(seed) for mk in arm_factories(ref).values()]
+    arms = [H.Prior(d["ctr"])] + [mk(seed) for mk in arm_factories(ref, suite).values()]
     for m in arms:
         if isinstance(m, H.Prior):
             log, vbest = [], None
@@ -133,23 +144,25 @@ def main(argv=None):
     ap.add_argument("--n-test", type=int, default=500)
     ap.add_argument("--epochs", type=int, default=200)
     ap.add_argument("--tune", action="store_true")
+    ap.add_argument("--suite", choices=SUITES, default="s2b")
     ap.add_argument("--out", type=Path)
     a = ap.parse_args(argv)
     if a.tune:
-        tune(a.task, a.n_train, a.n_val, a.n_test, a.epochs)
+        tune(a.task, a.n_train, a.n_val, a.n_test, a.epochs, a.suite)
         return None
-    tf = RESULTS / f"acc_s2_tune_{a.task}.json"
+    tf = tune_file(a.task, a.suite)
     if not tf.exists():
         raise SystemExit(f"Thiếu {tf}: chạy --tune trước (không được chạy test khi chưa tune đồng đều).")
     tuned = json.loads(tf.read_text(encoding="utf-8"))
     lrs = {k: v["lr"] for k, v in tuned.items()}
-    runs = [run_seed(a.task, s, a.n_train, a.n_val, a.n_test, a.epochs, lrs) for s in range(a.seeds)]
+    runs = [run_seed(a.task, s, a.n_train, a.n_val, a.n_test, a.epochs, lrs, a.suite) for s in range(a.seeds)]
     manifest = {"task": a.task, "commit": git_sha(), "python": platform.python_version(),
                 "numpy": np.__version__, "cpu": platform.processor(), "seeds": a.seeds,
                 "n": [a.n_train, a.n_val, a.n_test], "epochs": a.epochs, "latent": "P5",
                 "p5_seed": H.P5_SEED, "lr_grid": list(LR_GRID), "tuned_lr": lrs,
                 "tune_file_sha": hashlib.sha256(tf.read_bytes()).hexdigest(),
-                "arms_missing": ["H5", "H6"],
+                "suite": a.suite,
+                "arms_missing": ["H5", "H6"] if a.suite == "s2b" else ["H1-H4 (xem acc_s2b_*.json)"],
                 "dll_sha256": "N/A (H3 là bản NumPy train được, không dùng DLL Core)"}
     out = {"manifest": manifest, "summary": summarize(runs), "runs": runs}
     print(json.dumps({"manifest": manifest, "summary": out["summary"]}, indent=1, ensure_ascii=False))
