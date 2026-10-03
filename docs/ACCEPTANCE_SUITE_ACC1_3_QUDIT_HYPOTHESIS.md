@@ -171,3 +171,9 @@ Chỉ số then chốt `Δ_interaction` = (tương hỗ-có-cổng) − (tương
 - Backend: `D:\models\bin\llama-server.exe` / `llama-cli.exe` có sẵn; `llama_cpp` Python chưa cài; `torch 2.13.0+cpu` có nhưng KHÔNG có trọng số HF. llama-server chỉ lộ embedding đã pooling của lớp cuối (qua `--embeddings`) — **không lấy được residual theo layer mid/¾** như P1 yêu cầu. [GIẢ ĐỊNH — chưa verify]: cần thử endpoint thực tế; nếu cần hidden-state theo layer phải dùng eval-callback C++ hoặc cài llama-cpp-python (chưa làm).
 - Hệ quả: P2 dùng embedding lớp cuối 2560d → chiếu cố định lên 4096 (fit trên train, lưu ma trận + SHA). Chưa chạy trích xuất; `[HIỆU NĂNG — CHƯA ĐO]`. G-ENC bắt buộc trước mọi kết luận.
 - Lịch sử: 2026-10-03 | Antigravity (Claude Sonnet 5.5) | §8.7 xác minh model.
+
+### 8.8 Thử llama-cpp-python (2026-10-03) `[KẾT QUẢ ÂM — chặn P1 theo layer]`
+- Cài `llama-cpp-python 0.3.36` (bản mới nhất trên PyPI, wheel CPU dựng sẵn). Interpreter `python` của shell này là venv Hermes (`C:\Users\LENOVO\AppData\Local\hermes\hermes-agent\venv`) — `gguf`, `llama-cpp-python`, `diskcache` đã cài vào venv đó (dự án chưa có venv riêng).
+- **Nạp model FAIL:** `llama_model_load: done_getting_tensors: wrong number of tensors; expected 2131, got 720` — llama.cpp đóng gói trong wheel nhận ra arch `gemma4` nhưng triển khai cũ/khác, không khớp GGUF này. Trong khi `D:\models\bin\llama-server.exe` (build commit a94d563) nạp được model (theo AGENTS.md của 91s_Vivy).
+- Máy có g++/gcc/git nhưng KHÔNG có cmake/cl/ninja. Đường khả dĩ: (A) dựng llama.cpp mới + chương trình C++ dùng `cb_eval` bắt tensor `l_out-N`; (B) dựng llama-cpp-python từ source với llama.cpp mới; (C) chỉ dùng embedding lớp cuối qua llama-server (không đủ P1 theo layer).
+- Lịch sử: 2026-10-03 | Antigravity (Claude Sonnet 5.5) | §8.8 kết quả thử llama-cpp-python.
