@@ -1,0 +1,99 @@
+# Changelog: 2026-10-03 | Antigravity (Claude Sonnet 5.5) | Tạo mới — test harness S2 (gradient, mask, khớp tham số, tái lập, rò rỉ split)
+import sys
+from pathlib import Path
+
+import numpy as np
+import pytest
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+
+from acc import harness as H  # noqa: E402
+from acc.common import N_CAND  # noqa: E402
+from acc.tasks import TASKS, make_split  # noqa: E402
+
+
+def _small_batch(task="acc1", n=6):
+    s = make_split(task, "train", n, 0)
+    f, m, c = H.stack(s)
+    z = H.P5Latent(f.shape[1]).fit(f)(f)
+    return z, m, c
+
+
+def test_loss_gradient_matches_finite_difference():
+    rng = np.random.default_rng(0)
+    logits = rng.standard_normal((3, N_CAND))
+    mask = rng.random((3, N_CAND)) > 0.3
+    correct = np.zeros_like(mask)
+    correct[np.arange(3), [np.flatnonzero(mask[i])[0] for i in range(3)]] = True
+    _, g = H._masked_softmax_loss(logits, mask, correct)
+    for (i, j) in [(0, np.flatnonzero(mask[0])[1]), (2, np.flatnonzero(mask[2])[5])]:
+        e = 1e-6
+        lp, lm = logits.copy(), logits.copy()
+        lp[i, j] += e
+        lm[i, j] -= e
+        num = (H._masked_softmax_loss(lp, mask, correct)[0] - H._masked_softmax_loss(lm, mask, correct)[0]) / (2 * e)
+        assert num == pytest.approx(g[i, j], rel=1e-4, abs=1e-8)
+
+
+def test_param_counts_matched_within_5pct():
+    lin = H.LinearRank(64, 0)
+    mlp = H.MLP(lin.n_params(), 0)
+    assert abs(mlp.n_params() - lin.n_params()) / lin.n_params() < 0.05
+
+
+def test_no_mask_violation_and_regret_zero_for_perfect_scores():
+    s = make_split("acc1", "test", 20, 1)
+    f, m, c = H.stack(s)
+    scores = np.where(c, 1.0, 0.0)  # điểm hoàn hảo
+    scores = np.where(m, scores, H.NEG)
+    ev = H.evaluate(scores, m, c, s, "acc1")
+    assert ev["top1"] == 1.0 and ev["mask_violations"] == 0 and ev["mean_regret"] == pytest.approx(0, abs=1e-9)
+
+
+def test_masked_argmax_never_leaves_mask_even_with_adversarial_scores():
+    s = make_split("acc1", "test", 20, 2)
+    f, m, c = H.stack(s)
+    adversarial = np.where(m, -1.0, 10.0)  # điểm cao nhất nằm ngoài mask
+    sc = np.where(m, adversarial, H.NEG)
+    assert H.evaluate(sc, m, c, s, "acc1")["mask_violations"] == 0
+
+
+def test_training_reduces_loss_and_is_reproducible():
+    z, m, c = _small_batch(n=24)
+    losses = []
+    for _ in range(2):
+        mdl = H.MLP(50000, 3)
+        log, _ = H.train_model(mdl, z, m, c, z, m, c, epochs=30, eval_every=10)
+        losses.append([x[1] for x in log])
+    assert losses[0] == losses[1]            # tái lập tuyệt đối
+    assert losses[0][-1] < losses[0][0]      # loss giảm
+
+
+@pytest.mark.parametrize("task", list(TASKS))
+def test_splits_deterministic_and_disjoint_rng(task):
+    a = make_split(task, "train", 5, 4)
+    b = make_split(task, "train", 5, 4)
+    t = make_split(task, "test", 5, 4)
+    assert all(np.array_equal(x.features, y.features) for x, y in zip(a, b))
+    assert not any(np.array_equal(x.features, y.features) for x, y in zip(a, t))
+    for s in a + t:
+        assert s.correct.any()
+        assert (s.correct & s.infer_mask).any()  # luôn có đáp án trong mask suy luận
+
+
+def test_acc2_acc3_infer_mask_does_not_leak_answer():
+    for task in ("acc2", "acc3"):
+        s = make_split(task, "test", 5, 0)
+        assert all(x.infer_mask.all() for x in s)
+
+
+def test_invalid_args_rejected():
+    with pytest.raises(ValueError):
+        make_split("acc1", "nope", 5, 0)
+    with pytest.raises(ValueError):
+        make_split("acc1", "train", 0, 0)
+
+
+def test_bootstrap_ci_brackets_mean():
+    lo, hi = H.bootstrap_ci(np.array([1, 0, 1, 1, 0, 1, 1, 1], float))
+    assert lo <= 0.75 <= hi

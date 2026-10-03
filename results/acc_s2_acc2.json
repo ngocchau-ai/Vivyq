@@ -1,0 +1,343 @@
+{
+ "manifest": {
+  "task": "acc2",
+  "commit": "36802459b73f4a84b9dbb2717dcbd0cc65ea45cc",
+  "python": "3.11.9",
+  "numpy": "2.4.3",
+  "cpu": "AMD64 Family 26 Model 96 Stepping 0, AuthenticAMD",
+  "seeds": 5,
+  "n": [
+   2000,
+   500,
+   500
+  ],
+  "epochs": 200,
+  "latent": "P5",
+  "p5_seed": 20261003,
+  "arms_missing": [
+   "H3",
+   "H4",
+   "H5",
+   "H6"
+  ],
+  "dll_sha256": "N/A (chưa có arm H3)"
+ },
+ "summary": {
+  "H0_prior": {
+   "top1_median": 0.062,
+   "top1_per_seed": [
+    0.064,
+    0.066,
+    0.062,
+    0.046,
+    0.062
+   ],
+   "params": 4096
+  },
+  "H1_linear_rank64": {
+   "top1_median": 0.28,
+   "top1_per_seed": [
+    0.276,
+    0.308,
+    0.29,
+    0.248,
+    0.28
+   ],
+   "params": 524288
+  },
+  "H2_mlp_param_matched": {
+   "top1_median": 0.214,
+   "top1_per_seed": [
+    0.192,
+    0.256,
+    0.234,
+    0.164,
+    0.214
+   ],
+   "params": 520255
+  },
+  "H7_oracle": {
+   "top1_median": 1.0,
+   "top1_per_seed": [
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "params": 0
+  }
+ },
+ "runs": [
+  {
+   "seed": 0,
+   "dataset_sha": "cd8144c89378ef3ea8dc67ed29d0f62e1f93ace25afbf432dd172761ab88b868",
+   "arms": {
+    "H0_prior": {
+     "top1": 0.064,
+     "pass@8": 0.264,
+     "mask_violations": 0,
+     "n": 500,
+     "mean_regret": 9.990806108548584,
+     "ci95_top1": [
+      0.044,
+      0.086
+     ],
+     "params": 4096,
+     "val_top1": null,
+     "final_loss": null
+    },
+    "H1_linear_rank64": {
+     "top1": 0.276,
+     "pass@8": 0.61,
+     "mask_violations": 0,
+     "n": 500,
+     "mean_regret": 1.4397665945071232,
+     "ci95_top1": [
+      0.238,
+      0.316
+     ],
+     "params": 524288,
+     "val_top1": 0.278,
+     "final_loss": 0.21692346036434174
+    },
+    "H2_mlp_param_matched": {
+     "top1": 0.192,
+     "pass@8": 0.504,
+     "mask_violations": 0,
+     "n": 500,
+     "mean_regret": 2.4513530705804394,
+     "ci95_top1": [
+      0.158,
+      0.22604999999999972
+     ],
+     "params": 520255,
+     "val_top1": 0.19,
+     "final_loss": 0.040149886161088943
+    },
+    "H7_oracle": {
+     "top1": 1.0,
+     "params": 0,
+     "note": "đúng theo định nghĩa (vét cạn) — trần, không phải đối thủ"
+    }
+   },
+   "seconds": 67.4
+  },
+  {
+   "seed": 1,
+   "dataset_sha": "5005481a18524f485cc0f949964e95f9718f54bf48c85a8973f1ac7b0b7f6c0b",
+   "arms": {
+    "H0_prior": {
+     "top1": 0.066,
+     "pass@8": 0.268,
+     "mask_violations": 0,
+     "n": 500,
+     "mean_regret": 9.183587174269404,
+     "ci95_top1": [
+      0.044,
+      0.088
+     ],
+     "params": 4096,
+     "val_top1": null,
+     "final_loss": null
+    },
+    "H1_linear_rank64": {
+     "top1": 0.308,
+     "pass@8": 0.628,
+     "mask_violations": 0,
+     "n": 500,
+     "mean_regret": 1.4908599178199704,
+     "ci95_top1": [
+      0.27,
+      0.35
+     ],
+     "params": 524288,
+     "val_top1": 0.322,
+     "final_loss": 0.2227248102426529
+    },
+    "H2_mlp_param_matched": {
+     "top1": 0.256,
+     "pass@8": 0.542,
+     "mask_violations": 0,
+     "n": 500,
+     "mean_regret": 2.1695411900576373,
+     "ci95_top1": [
+      0.216,
+      0.292
+     ],
+     "params": 520255,
+     "val_top1": 0.25,
+     "final_loss": 0.012350832112133503
+    },
+    "H7_oracle": {
+     "top1": 1.0,
+     "params": 0,
+     "note": "đúng theo định nghĩa (vét cạn) — trần, không phải đối thủ"
+    }
+   },
+   "seconds": 68.2
+  },
+  {
+   "seed": 2,
+   "dataset_sha": "396b4b6d7c4a3de95230f4405e7eadc638671ac80fb8e218e02da83f7a76653d",
+   "arms": {
+    "H0_prior": {
+     "top1": 0.062,
+     "pass@8": 0.288,
+     "mask_violations": 0,
+     "n": 500,
+     "mean_regret": 9.413522749409735,
+     "ci95_top1": [
+      0.042,
+      0.084
+     ],
+     "params": 4096,
+     "val_top1": null,
+     "final_loss": null
+    },
+    "H1_linear_rank64": {
+     "top1": 0.29,
+     "pass@8": 0.636,
+     "mask_violations": 0,
+     "n": 500,
+     "mean_regret": 1.2824723847730322,
+     "ci95_top1": [
+      0.252,
+      0.33
+     ],
+     "params": 524288,
+     "val_top1": 0.28,
+     "final_loss": 0.2777068614959717
+    },
+    "H2_mlp_param_matched": {
+     "top1": 0.234,
+     "pass@8": 0.54,
+     "mask_violations": 0,
+     "n": 500,
+     "mean_regret": 2.0480516801166764,
+     "ci95_top1": [
+      0.198,
+      0.272
+     ],
+     "params": 520255,
+     "val_top1": 0.228,
+     "final_loss": 0.013144398108124733
+    },
+    "H7_oracle": {
+     "top1": 1.0,
+     "params": 0,
+     "note": "đúng theo định nghĩa (vét cạn) — trần, không phải đối thủ"
+    }
+   },
+   "seconds": 68.1
+  },
+  {
+   "seed": 3,
+   "dataset_sha": "f3bf3ffe0681737dce3517b62a07e6960f784b50d8faa5702b0c9ebcd63d714e",
+   "arms": {
+    "H0_prior": {
+     "top1": 0.046,
+     "pass@8": 0.276,
+     "mask_violations": 0,
+     "n": 500,
+     "mean_regret": 9.617416484850343,
+     "ci95_top1": [
+      0.028,
+      0.064
+     ],
+     "params": 4096,
+     "val_top1": null,
+     "final_loss": null
+    },
+    "H1_linear_rank64": {
+     "top1": 0.248,
+     "pass@8": 0.622,
+     "mask_violations": 0,
+     "n": 500,
+     "mean_regret": 1.5061581984433496,
+     "ci95_top1": [
+      0.21,
+      0.286
+     ],
+     "params": 524288,
+     "val_top1": 0.258,
+     "final_loss": 0.3815349042415619
+    },
+    "H2_mlp_param_matched": {
+     "top1": 0.164,
+     "pass@8": 0.5,
+     "mask_violations": 0,
+     "n": 500,
+     "mean_regret": 2.5439430848780358,
+     "ci95_top1": [
+      0.13,
+      0.19804999999999973
+     ],
+     "params": 520255,
+     "val_top1": 0.188,
+     "final_loss": 0.014004182070493698
+    },
+    "H7_oracle": {
+     "top1": 1.0,
+     "params": 0,
+     "note": "đúng theo định nghĩa (vét cạn) — trần, không phải đối thủ"
+    }
+   },
+   "seconds": 67.6
+  },
+  {
+   "seed": 4,
+   "dataset_sha": "43978fcec5c1b92be5486f74ce92025ab08bfd386e8faf33766a43e868464bcd",
+   "arms": {
+    "H0_prior": {
+     "top1": 0.062,
+     "pass@8": 0.294,
+     "mask_violations": 0,
+     "n": 500,
+     "mean_regret": 9.674840752798376,
+     "ci95_top1": [
+      0.042,
+      0.084
+     ],
+     "params": 4096,
+     "val_top1": null,
+     "final_loss": null
+    },
+    "H1_linear_rank64": {
+     "top1": 0.28,
+     "pass@8": 0.62,
+     "mask_violations": 0,
+     "n": 500,
+     "mean_regret": 1.3342070720721244,
+     "ci95_top1": [
+      0.24,
+      0.32
+     ],
+     "params": 524288,
+     "val_top1": 0.294,
+     "final_loss": 0.2764738202095032
+    },
+    "H2_mlp_param_matched": {
+     "top1": 0.214,
+     "pass@8": 0.484,
+     "mask_violations": 0,
+     "n": 500,
+     "mean_regret": 2.3025940688522106,
+     "ci95_top1": [
+      0.176,
+      0.248
+     ],
+     "params": 520255,
+     "val_top1": 0.216,
+     "final_loss": 0.01572888158261776
+    },
+    "H7_oracle": {
+     "top1": 1.0,
+     "params": 0,
+     "note": "đúng theo định nghĩa (vét cạn) — trần, không phải đối thủ"
+    }
+   },
+   "seconds": 68.0
+  }
+ ]
+}

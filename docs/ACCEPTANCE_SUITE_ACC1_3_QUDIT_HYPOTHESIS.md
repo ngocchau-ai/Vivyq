@@ -153,3 +153,14 @@ Chỉ số then chốt `Δ_interaction` = (tương hỗ-có-cổng) − (tương
 - `[GIẢ ĐỊNH]` còn mở: tên/hidden-dim chính xác của "gemma4 4eb"; chưa cung cấp file model.
 - Test flaky có sẵn, không do thay đổi này: `tests/test_shm_ipc.py` timeout 500 µs ngẫu nhiên (1/3 lần chạy riêng; `[CẦN THEO DÕI]`).
 
+
+### 8.6 Kết quả S2 (2026-10-03) — arm H0/H1/H2/H7 trên P5, CPU, 5 seed, n=2000/500/500, 200 epoch `[PROTOTYPE]`
+| Tác vụ | H0 prior | H1 linear r64 | H2 MLP khớp tham số | Ghi chú |
+|---|---|---|---|---|
+| ACC-1 top-1 (median) / pass@8 | 0.100 / 0.422 | 0.156 / 0.440 | 0.206 / 0.492 | OOD test; vi phạm mask = 0 |
+| ACC-2 top-1 / pass@8 | 0.062 / 0.276 | 0.280 / 0.622 | 0.214 / 0.504 | |
+| ACC-3 top-1 / pass@8 | 0.002 / 0.012 | 0.004 / 0.014 | 0.004 / 0.016 | ~ngẫu nhiên, đúng kỳ vọng §2 |
+- Params: H1 524 288, H2 520 255 (−0,77%, trong ±5%). Mã: `scripts/acc/{tasks,harness,run_s2}.py`, test `tests/test_acc_harness.py`; toàn bộ `pytest tests` 106 passed. Kết quả thô: `results/acc_s2_acc{1,2,3}.json`.
+- **Diễn giải trung thực:** trên P5 (latent là phép xoay trực giao của ~40 đặc trưng) H1/H2 chỉ hơn prior nhẹ ở ACC-1 và hơn rõ ở ACC-2; ACC-3 thất bại hoàn toàn. `[GIẢ ĐỊNH]` có thể do chưa tune (lr/epoch cố định, full-batch) — chưa chứng minh là giới hạn kiến trúc. Chưa được rút kết luận về H3–H6.
+- **Hạn chế:** H7 là tautology (oracle chấm đúng theo định nghĩa) — chỉ để kiểm tra pipeline. Manifest `commit` trong JSON trỏ S0 (3680245) vì code S2 chưa commit lúc chạy. Chưa có arm H3 (Core E9), H4, H5, H6; chưa có G-ENC (chỉ cần khi dùng hidden-state thật). Tune hyper-parameter chưa làm (cần ngân sách bằng nhau/arm theo §5).
+- Lịch sử: 2026-10-03 | Antigravity (Claude Sonnet 5.5) | §8.6 kết quả S2.

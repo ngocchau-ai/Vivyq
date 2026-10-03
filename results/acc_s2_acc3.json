@@ -1,0 +1,328 @@
+{
+ "manifest": {
+  "task": "acc3",
+  "commit": "36802459b73f4a84b9dbb2717dcbd0cc65ea45cc",
+  "python": "3.11.9",
+  "numpy": "2.4.3",
+  "cpu": "AMD64 Family 26 Model 96 Stepping 0, AuthenticAMD",
+  "seeds": 5,
+  "n": [
+   2000,
+   500,
+   500
+  ],
+  "epochs": 200,
+  "latent": "P5",
+  "p5_seed": 20261003,
+  "arms_missing": [
+   "H3",
+   "H4",
+   "H5",
+   "H6"
+  ],
+  "dll_sha256": "N/A (chưa có arm H3)"
+ },
+ "summary": {
+  "H0_prior": {
+   "top1_median": 0.002,
+   "top1_per_seed": [
+    0.002,
+    0.006,
+    0.004,
+    0.0,
+    0.002
+   ],
+   "params": 4096
+  },
+  "H1_linear_rank64": {
+   "top1_median": 0.004,
+   "top1_per_seed": [
+    0.0,
+    0.004,
+    0.008,
+    0.004,
+    0.004
+   ],
+   "params": 524288
+  },
+  "H2_mlp_param_matched": {
+   "top1_median": 0.004,
+   "top1_per_seed": [
+    0.004,
+    0.004,
+    0.002,
+    0.0,
+    0.006
+   ],
+   "params": 520255
+  },
+  "H7_oracle": {
+   "top1_median": 1.0,
+   "top1_per_seed": [
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "params": 0
+  }
+ },
+ "runs": [
+  {
+   "seed": 0,
+   "dataset_sha": "dc8cd9bc83acaaf1b334227f1b6f6a48f129bd9795cf1eda404e46c86adcbdda",
+   "arms": {
+    "H0_prior": {
+     "top1": 0.002,
+     "pass@8": 0.012,
+     "mask_violations": 0,
+     "n": 500,
+     "ci95_top1": [
+      0.0,
+      0.006
+     ],
+     "params": 4096,
+     "val_top1": null,
+     "final_loss": null
+    },
+    "H1_linear_rank64": {
+     "top1": 0.0,
+     "pass@8": 0.01,
+     "mask_violations": 0,
+     "n": 500,
+     "ci95_top1": [
+      0.0,
+      0.0
+     ],
+     "params": 524288,
+     "val_top1": 0.012,
+     "final_loss": 1.223710536956787
+    },
+    "H2_mlp_param_matched": {
+     "top1": 0.004,
+     "pass@8": 0.018,
+     "mask_violations": 0,
+     "n": 500,
+     "ci95_top1": [
+      0.0,
+      0.01
+     ],
+     "params": 520255,
+     "val_top1": 0.008,
+     "final_loss": 0.20900499820709229
+    },
+    "H7_oracle": {
+     "top1": 1.0,
+     "params": 0,
+     "note": "đúng theo định nghĩa (vét cạn) — trần, không phải đối thủ"
+    }
+   },
+   "seconds": 67.5
+  },
+  {
+   "seed": 1,
+   "dataset_sha": "305d6964a0cee38abfcbc53ed8b838a7759429e7df9e9549392addc81f191a1b",
+   "arms": {
+    "H0_prior": {
+     "top1": 0.006,
+     "pass@8": 0.02,
+     "mask_violations": 0,
+     "n": 500,
+     "ci95_top1": [
+      0.0,
+      0.014
+     ],
+     "params": 4096,
+     "val_top1": null,
+     "final_loss": null
+    },
+    "H1_linear_rank64": {
+     "top1": 0.004,
+     "pass@8": 0.024,
+     "mask_violations": 0,
+     "n": 500,
+     "ci95_top1": [
+      0.0,
+      0.01
+     ],
+     "params": 524288,
+     "val_top1": 0.006,
+     "final_loss": 1.1576123237609863
+    },
+    "H2_mlp_param_matched": {
+     "top1": 0.004,
+     "pass@8": 0.014,
+     "mask_violations": 0,
+     "n": 500,
+     "ci95_top1": [
+      0.0,
+      0.01
+     ],
+     "params": 520255,
+     "val_top1": 0.006,
+     "final_loss": 0.15801742672920227
+    },
+    "H7_oracle": {
+     "top1": 1.0,
+     "params": 0,
+     "note": "đúng theo định nghĩa (vét cạn) — trần, không phải đối thủ"
+    }
+   },
+   "seconds": 68.6
+  },
+  {
+   "seed": 2,
+   "dataset_sha": "8b7ec1083e311b001dc896af2898f2b322edc0082b2b441d8ffc69a75acb9081",
+   "arms": {
+    "H0_prior": {
+     "top1": 0.004,
+     "pass@8": 0.018,
+     "mask_violations": 0,
+     "n": 500,
+     "ci95_top1": [
+      0.0,
+      0.01
+     ],
+     "params": 4096,
+     "val_top1": null,
+     "final_loss": null
+    },
+    "H1_linear_rank64": {
+     "top1": 0.008,
+     "pass@8": 0.03,
+     "mask_violations": 0,
+     "n": 500,
+     "ci95_top1": [
+      0.002,
+      0.016
+     ],
+     "params": 524288,
+     "val_top1": 0.016,
+     "final_loss": 1.173626184463501
+    },
+    "H2_mlp_param_matched": {
+     "top1": 0.002,
+     "pass@8": 0.012,
+     "mask_violations": 0,
+     "n": 500,
+     "ci95_top1": [
+      0.0,
+      0.006
+     ],
+     "params": 520255,
+     "val_top1": 0.008,
+     "final_loss": 0.20320314168930054
+    },
+    "H7_oracle": {
+     "top1": 1.0,
+     "params": 0,
+     "note": "đúng theo định nghĩa (vét cạn) — trần, không phải đối thủ"
+    }
+   },
+   "seconds": 68.1
+  },
+  {
+   "seed": 3,
+   "dataset_sha": "668a712ccef67f6fa62db0a4425b3c407c4d4d594d8964d47a13796780adb4fc",
+   "arms": {
+    "H0_prior": {
+     "top1": 0.0,
+     "pass@8": 0.012,
+     "mask_violations": 0,
+     "n": 500,
+     "ci95_top1": [
+      0.0,
+      0.0
+     ],
+     "params": 4096,
+     "val_top1": null,
+     "final_loss": null
+    },
+    "H1_linear_rank64": {
+     "top1": 0.004,
+     "pass@8": 0.014,
+     "mask_violations": 0,
+     "n": 500,
+     "ci95_top1": [
+      0.0,
+      0.01
+     ],
+     "params": 524288,
+     "val_top1": 0.004,
+     "final_loss": 1.1390161514282227
+    },
+    "H2_mlp_param_matched": {
+     "top1": 0.0,
+     "pass@8": 0.016,
+     "mask_violations": 0,
+     "n": 500,
+     "ci95_top1": [
+      0.0,
+      0.0
+     ],
+     "params": 520255,
+     "val_top1": 0.006,
+     "final_loss": 0.18999376893043518
+    },
+    "H7_oracle": {
+     "top1": 1.0,
+     "params": 0,
+     "note": "đúng theo định nghĩa (vét cạn) — trần, không phải đối thủ"
+    }
+   },
+   "seconds": 67.3
+  },
+  {
+   "seed": 4,
+   "dataset_sha": "d75fe8324eb1a0e8276c0cbe4d31ebd322bda2b5270bf149f768f214a8114a35",
+   "arms": {
+    "H0_prior": {
+     "top1": 0.002,
+     "pass@8": 0.006,
+     "mask_violations": 0,
+     "n": 500,
+     "ci95_top1": [
+      0.0,
+      0.006
+     ],
+     "params": 4096,
+     "val_top1": null,
+     "final_loss": null
+    },
+    "H1_linear_rank64": {
+     "top1": 0.004,
+     "pass@8": 0.014,
+     "mask_violations": 0,
+     "n": 500,
+     "ci95_top1": [
+      0.0,
+      0.01
+     ],
+     "params": 524288,
+     "val_top1": 0.012,
+     "final_loss": 1.3987717628479004
+    },
+    "H2_mlp_param_matched": {
+     "top1": 0.006,
+     "pass@8": 0.026,
+     "mask_violations": 0,
+     "n": 500,
+     "ci95_top1": [
+      0.0,
+      0.014
+     ],
+     "params": 520255,
+     "val_top1": 0.004,
+     "final_loss": 0.16427169740200043
+    },
+    "H7_oracle": {
+     "top1": 1.0,
+     "params": 0,
+     "note": "đúng theo định nghĩa (vét cạn) — trần, không phải đối thủ"
+    }
+   },
+   "seconds": 67.1
+  }
+ ]
+}
