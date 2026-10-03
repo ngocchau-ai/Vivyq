@@ -97,3 +97,44 @@ def test_invalid_args_rejected():
 def test_bootstrap_ci_brackets_mean():
     lo, hi = H.bootstrap_ci(np.array([1, 0, 1, 1, 0, 1, 1, 1], float))
     assert lo <= 0.75 <= hi
+
+
+def test_e9_rotor_gradients_match_finite_difference():
+    z, m, c = _small_batch(n=4)
+    mdl = H.E9CoreArm(True, 0)
+    mdl.p["Wc"] *= 8  # tín hiệu đủ lớn để sai phân hữu hạn float32 ổn định
+    logits, cache = mdl.forward(z)
+    _, dlog = H._masked_softmax_loss(logits, m, c)
+    g = mdl.grads(z, dlog.astype(np.float32), cache)
+
+    def loss():
+        return H._masked_softmax_loss(mdl.forward(z)[0], m, c)[0]
+
+    for k in (0, 3, 6):
+        e = 1e-2
+        t0 = mdl.p["theta"][k]
+        mdl.p["theta"][k] = t0 + e
+        lp = loss()
+        mdl.p["theta"][k] = t0 - e
+        lm = loss()
+        mdl.p["theta"][k] = t0
+        assert (lp - lm) / (2 * e) == pytest.approx(float(g["theta"][k]), rel=5e-2, abs=2e-3)
+    j = (5, 17)
+    e = 1e-2
+    w0 = mdl.p["Wc"][j]
+    mdl.p["Wc"][j] = w0 + e
+    lp = loss()
+    mdl.p["Wc"][j] = w0 - e
+    lm = loss()
+    mdl.p["Wc"][j] = w0
+    assert (lp - lm) / (2 * e) == pytest.approx(float(g["Wc"][j]), rel=5e-2, abs=2e-3)
+
+
+def test_rotors_preserve_norm_and_zero_angle_equals_no_rotor():
+    z, _, _ = _small_batch(n=5)
+    h3, h4 = H.E9CoreArm(True, 1), H.E9CoreArm(False, 1)
+    assert np.allclose(np.linalg.norm(h3._rot(z, h3.p["theta"]), axis=1), np.linalg.norm(z, axis=1), rtol=1e-4)
+    h3.p["theta"][:] = 0
+    assert np.allclose(h3.forward(z)[0], h4.forward(z)[0], atol=1e-5)
+    assert h3.n_params() - h4.n_params() == 8
+    assert abs(H.MLP(h3.n_params(), 0).n_params() - h3.n_params()) / h3.n_params() < 0.05

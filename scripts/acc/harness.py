@@ -117,6 +117,69 @@ class MLP:
         return {"W2": h.T @ dlog, "b2": dlog.sum(0), "W1": z.T @ dh, "b1": dh.sum(0)}
 
 
+# Mặt phẳng rotor giống Core E9 (results/branch_c: rotors_config); góc khởi tạo cũng lấy từ E9.
+E9_ROTORS = [(0, 1, 0.25), (2, 3, -0.35), (4, 5, 0.40), (6, 7, -0.20),
+             (8, 9, 0.15), (10, 11, -0.30), (0, 6, 0.18), (1, 7, -0.22)]
+
+
+def _rotor_pairs(pi, pj):
+    bi, bj = 1 << min(pi, pj), 1 << max(pi, pj)
+    base = np.flatnonzero((np.arange(N_CAND) & (bi | bj)) == 0)
+    return base | bi, base | bj  # 1024 cặp, khớp precompute_rotor_pairs của E9
+
+
+_PAIRS = [_rotor_pairs(pi, pj) for pi, pj, _ in E9_ROTORS]
+
+
+class E9CoreArm:
+    """H3 (use_rotors=True) / H4 (False): [rotor Givens] -> W_c (64x4096) -> codebook C (4096x64) + cost b.
+    Tham số học: W_c, C, b (+ 8 góc rotor ở H3; mặt phẳng cố định như E9)."""
+
+    def __init__(self, use_rotors: bool, seed=0, rank=64):
+        self.use_rotors = use_rotors
+        self.name = "H3_e9_core" if use_rotors else "H4_e9_no_rotor"
+        r = np.random.default_rng(seed + 2)
+        self.p = {"Wc": (r.standard_normal((rank, N_CAND)) / np.sqrt(N_CAND)).astype(np.float32),
+                  "C": (r.standard_normal((N_CAND, rank)) / np.sqrt(rank)).astype(np.float32),
+                  "b": np.zeros(N_CAND, np.float32)}
+        if use_rotors:
+            self.p["theta"] = np.array([t for _, _, t in E9_ROTORS], np.float32)
+
+    def n_params(self):
+        return sum(v.size for v in self.p.values())
+
+    def _rot(self, x, theta):
+        y = x.copy()
+        for (ia, ib), th in zip(_PAIRS, theta):
+            c, s = np.float32(np.cos(th)), np.float32(np.sin(th))
+            va, vb = y[:, ia].copy(), y[:, ib].copy()
+            y[:, ia], y[:, ib] = c * va - s * vb, s * va + c * vb
+        return y
+
+    def forward(self, z):
+        zr = self._rot(z, self.p["theta"]) if self.use_rotors else z
+        pr = zr @ self.p["Wc"].T
+        return pr @ self.p["C"].T + self.p["b"], (zr, pr)
+
+    def grads(self, z, dlog, cache):
+        zr, pr = cache
+        dpr = dlog @ self.p["C"]
+        g = {"C": dlog.T @ pr, "b": dlog.sum(0), "Wc": dpr.T @ zr}
+        if self.use_rotors:
+            y, dy = zr.copy(), dpr @ self.p["Wc"]
+            dth = np.zeros(len(_PAIRS), np.float32)
+            for m in range(len(_PAIRS) - 1, -1, -1):
+                ia, ib = _PAIRS[m]
+                th = self.p["theta"][m]
+                c, s = np.float32(np.cos(th)), np.float32(np.sin(th))
+                ya, yb, dya, dyb = y[:, ia].copy(), y[:, ib].copy(), dy[:, ia].copy(), dy[:, ib].copy()
+                dth[m] = float((dyb * ya - dya * yb).sum())
+                dy[:, ia], dy[:, ib] = c * dya + s * dyb, -s * dya + c * dyb
+                y[:, ia], y[:, ib] = c * ya + s * yb, -s * ya + c * yb  # khôi phục đầu vào (phép quay trực giao)
+            g["theta"] = dth
+        return g
+
+
 def train_model(model, ztr, mtr, ctr, zva, mva, cva, epochs=200, lr=2e-3, eval_every=10):
     """Full-batch Adam; giữ tham số tốt nhất theo val top-1. Trả về log (epoch, loss, val_acc)."""
     opt = _Adam(model.p, lr)

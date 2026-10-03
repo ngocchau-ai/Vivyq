@@ -177,3 +177,17 @@ Chỉ số then chốt `Δ_interaction` = (tương hỗ-có-cổng) − (tương
 - **Nạp model FAIL:** `llama_model_load: done_getting_tensors: wrong number of tensors; expected 2131, got 720` — llama.cpp đóng gói trong wheel nhận ra arch `gemma4` nhưng triển khai cũ/khác, không khớp GGUF này. Trong khi `D:\models\bin\llama-server.exe` (build commit a94d563) nạp được model (theo AGENTS.md của 91s_Vivy).
 - Máy có g++/gcc/git nhưng KHÔNG có cmake/cl/ninja. Đường khả dĩ: (A) dựng llama.cpp mới + chương trình C++ dùng `cb_eval` bắt tensor `l_out-N`; (B) dựng llama-cpp-python từ source với llama.cpp mới; (C) chỉ dùng embedding lớp cuối qua llama-server (không đủ P1 theo layer).
 - Lịch sử: 2026-10-03 | Antigravity (Claude Sonnet 5.5) | §8.8 kết quả thử llama-cpp-python.
+
+### 8.9 Kết quả S2b — ACC-1 (2026-10-03, `[TẠM THỜI]` — ACC-2/3 đang chạy) `[PROTOTYPE]`
+Có tune lr đồng đều (lưới `5e-4, 2e-3, 8e-3`, 3 lần thử/arm, chọn trên val seed 0; cả 4 arm đều chọn lr=8e-3 = biên lưới → có thể chưa tối ưu). 5 seed, test OOD (dense/bipartite/wheel/K6-perturbed), CI95 gộp 2500 mẫu. Raw: `results/acc_s2b_acc1.json`, `results/acc_s2_tune_acc1.json`.
+| Arm | Params | top-1 gộp [CI95] | pass@8 | regret | vi phạm mask |
+|---|---|---|---|---|---|
+| H0 prior | 4 096 | 0.102 [0.090, 0.114] | 0.422 | 1.70 | 0 |
+| H1 linear r64 | 524 288 | 0.172 [0.158, 0.187] | 0.500 | 1.68 | 0 |
+| H2 MLP khớp tham số | 520 255 | 0.194 [0.179, 0.210] | 0.512 | 1.53 | 0 |
+| H3 Core E9 (8 rotor) | 528 392 | 0.168 [0.154, 0.183] | 0.446 | 1.76 | 0 |
+| H4 E9 bỏ rotor | 528 384 | 0.157 [0.143, 0.171] | 0.462 | 1.70 | 0 |
+- **H3 − H4 (ghép cặp theo mẫu):** +0.011, CI95 [−0.007, +0.029] chứa 0 → theo §4 H3 **không** thắng H4: `[ROTOR DƯ THỪA — ủng hộ, trên ACC-1/P5]`. Phù hợp phân tích lý thuyết: rotor cố định-mặt-phẳng là phép trực giao đứng trước `W_c` tuyến tính nên bị `W_c` hấp thụ. Đề xuất cô lập (không xóa) rotor nếu ACC-2/3 cho kết quả tương tự.
+- H2 (MLP) cao nhất nhưng chênh H1/H3 nhỏ (CI chồng lấn một phần). Mọi arm chỉ ~0.16–0.19 so với prior 0.10; khoảng cách lớn val (~0.39) → test OOD (~0.17) cho thấy **không khái quát hóa sang đồ thị dày**.
+- Chưa kết luận về H5/H6 (chưa dựng). Manifest `commit` = `5a7d4a9` nhưng `run_s2.py` phiên bản có H3/H4 chưa commit lúc chạy [GHI CHÚ].
+- Lịch sử: 2026-10-03 | Antigravity (Claude Sonnet 5.5) | §8.9 ACC-1 tạm thời.
