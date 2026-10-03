@@ -232,3 +232,22 @@ Có tune lr đồng đều (3 lần thử/arm, chọn trên val seed 0; hầu h�
 - **Rủi ro đã biết trước khi chạy:** ACC-3 mọi arm ≈ ngẫu nhiên ở S2b → nhiều khả năng ACC-3 không đạt C1/C2 với bất kỳ arm nào; vì vậy C1/C2 thực tế phải đạt ở cả ACC-1 **và** ACC-2.
 - Lịch sử: 2026-10-04 | Antigravity (Claude Opus 5.5) | §8.12 pre-register H5/H6.
 
+### 8.13 PRE-REGISTER S2d — Đề xuất+Kiểm chứng (H+V) và Lệch cấu trúc (2026-10-04 06:40, chủ dự án duyệt) `[KHÓA TRƯỚC KHI CHẠY — chưa có code]`
+**Khai báo trung thực về thời điểm:** lúc viết mục này, S2c ACC-1 đang chấm test top-1 (seed 0–3). Agent **chưa xem** số top-1 test (đã che trong log) và **chưa xem** pass@K của S2c. Để không chạm lại tập test đã dùng, **S2d dùng seed mới 5–9** (5 seed; dữ liệu train/val/test sinh mới theo `make_split`). Seed 0–4 không dùng cho S2d.
+
+**Thí nghiệm D1 — Đề xuất + Kiểm chứng (H+V).** Mỗi arm học (H1, H2, H4, H5_qudit_interact, H6_qubit_interact) đề xuất top-K (K = 8, trong mask), sau đó verifier exact của bài chọn ứng viên tốt nhất: ACC-1 chọn cost nhỏ nhất, ACC-2 chọn năng lượng nhỏ nhất, ACC-3 chọn x thỏa phương trình. Dùng **cùng** V cho mọi arm.
+- Metric chính: `top1_V` theo từng mẫu = 1 nếu ứng viên V chọn thuộc tập đúng (với cả ba bài, giá trị này bằng pass@K theo từng mẫu). Metric phụ: `regret_V` (ACC-1/2) và độ trễ.
+- **D1-C (ủng hộ):** CI95 gộp `top1_V` của H5 nằm hoàn toàn trên CI95 của từng arm H1+V, H2+V, H4+V, H6+V ở ≥ 2/3 bài; 0 vi phạm mask.
+- **D1-L (ngân sách thời gian, báo cáo riêng):** độ trễ H5 + top-K + V đo bằng bản C++ ≤ 1 ms p99 trên máy này. Chưa có bản C++ → ghi `[CHƯA ĐO]`, không suy ra từ NumPy.
+- Tham chiếu: H7 (vét cạn 4096) báo cáo kèm, không phải đối thủ.
+
+**Thí nghiệm D2 — Lệch cấu trúc** (tách "qudit" khỏi "biết trước cách chia site").
+- `H5_qudit_misaligned`: giống `H5_qudit_interact` (6×4, orders 1–3, r = 93, 526 064 params) nhưng 12 bit của ứng viên được hoán vị cố định trước khi gom cặp thành site, nên site của mô hình **không** trùng site của bài. Hoán vị sinh từ `np.random.default_rng(20261004).permutation(12)`, **loại** hoán vị chỉ đổi chỗ trong cặp hoặc đổi thứ tự cặp (sinh lại tới khi có ≥ 4 cặp bị phá).
+- `H6_qubit_order4`: 12 qubit, orders 1–4, M = 9 968, r = 37, 530 336 params (+0.37%). Arm qubit **đủ khả năng biểu diễn** factor cặp-qudit (4 bit).
+- **D2-A:** `Δ_align` = hiệu ghép cặp `H5_qudit_interact − H5_qudit_misaligned`. Nếu cận dưới CI95 > 0 ở ≥ 2/3 bài **và** `H5_qudit_misaligned` không vượt `H6_qubit_interact` (CI chồng lấn hoặc thấp hơn) → ghi `[ƯU THẾ ĐẾN TỪ CẤU TRÚC BIẾT TRƯỚC, KHÔNG PHẢI QUDIT]`.
+- **D2-Q:** `H5_qudit_interact − H6_qubit_order4` ghép cặp. Nếu CI95 chứa 0 hoặc âm ở ≥ 2/3 bài → ghi `[QUDIT KHÔNG HƠN QUBIT ĐỦ BẬC]`.
+
+**Quy trình chung:** P5, n = 2000/500/500, 200 epoch, lưới lr và 3 lần thử như §8.12. Arm đã tune giữ nguyên lr từ `acc_s2_tune_*` / `acc_s2c_tune_*`; arm mới (`H5_qudit_misaligned`, `H6_qubit_order4`) tune 3 lần trên val seed 0 (không chạm test). Mỗi arm/seed chấm test 1 lần. Lưu `ok`, `passk_ok` theo từng mẫu. Kết quả ghi vào `results/acc_s2d_*.json`. Code và test của `analyze_s2d.py` phải commit **trước** khi chạy seed 5–9.
+- Lịch sử: 2026-10-04 | Antigravity (Claude Opus 5.5) | §8.13 pre-register S2d (D1 H+V, D2 lệch cấu trúc).
+
+
