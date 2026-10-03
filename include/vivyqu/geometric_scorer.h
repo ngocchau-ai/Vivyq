@@ -11,6 +11,14 @@ constexpr uint32_t E9_VERSION       = 1;
 constexpr uint32_t E9_SUBSPACE_DIM  = 64;
 constexpr uint32_t E9_NUM_ROTORS    = 8;
 
+// [ISOLATED 2026-10-04] Rotor Givens bị cô lập khỏi đường quyết định mặc định.
+// Bằng chứng: docs/ACCEPTANCE_SUITE_ACC1_3_QUDIT_HYPOTHESIS.md §8.10 (H3 không thắng H4 ở ACC-1..3).
+// ISOLATED: rotor được gập vào W_c_active = W_c·R(θ) lúc nạp/đổi góc -> runtime bỏ qua bước rotor,
+//           quyết định giữ nguyên (sai khác chỉ ở làm tròn float32).
+// LEGACY  : đường cũ nguyên vẹn (áp rotor lên h rồi chiếu bằng W_c gốc) — giữ để đối chứng.
+constexpr int32_t ROTOR_MODE_ISOLATED = 0;
+constexpr int32_t ROTOR_MODE_LEGACY   = 1;
+
 // Cấu trúc lưu 1.024 cặp chỉ số trực giao của 1 rotor Cl(12)
 struct RotorPairIndices {
     uint16_t a[1024];
@@ -21,8 +29,12 @@ struct RotorPairIndices {
 
 // Cấu trúc lưu trữ toàn bộ Trọng số Mô hình E9 trong bộ nhớ L2/L3 (~2.02 MiB)
 struct alignas(64) GeometricWeights {
-    // Ma trận chiếu W_c: (64, 4096) float32 = 1.048.576 bytes
+    // Ma trận chiếu W_c: (64, 4096) float32 = 1.048.576 bytes (GỐC từ e9_weights.bin, không bao giờ bị sửa)
     float W_c[E9_SUBSPACE_DIM * CL12_DIMENSION];
+
+    // Ma trận chiếu dùng ở đường mặc định ISOLATED: W_c·R(θ) (rotor đã gập). LEGACY không dùng mảng này.
+    // Dẫn xuất từ W_c + góc rotor, tính lại khi nạp / đổi góc / đổi chế độ (refresh_active_projection).
+    float W_c_active[E9_SUBSPACE_DIM * CL12_DIMENSION];
 
     // Bộ mã ứng viên (Candidate Codebook): (4096, 64) float32 = 1.048.576 bytes
     float candidate_codebook[CL12_DIMENSION * E9_SUBSPACE_DIM];
@@ -41,12 +53,17 @@ struct alignas(64) GeometricWeights {
 
     float topology_lambda; // 0.3f
     bool  is_loaded;
+    int32_t rotor_mode;    // ROTOR_MODE_ISOLATED (mặc định) | ROTOR_MODE_LEGACY
 
     void reset() noexcept;
     bool load_from_binary(const char* filepath) noexcept;
     void precompute_rotors() noexcept;
     void update_rotor_angle(size_t rotor_idx, float delta_theta) noexcept;
     void set_rotor_angle(size_t rotor_idx, float theta) noexcept;
+    // Tính lại W_c_active theo rotor_mode và góc rotor hiện tại.
+    void refresh_active_projection() noexcept;
+    // Trả false nếu mode không hợp lệ (không đổi trạng thái).
+    bool set_rotor_mode(int32_t mode) noexcept;
 };
 
 // Lớp thực thi quyết định hình học E9 tối ưu hóa AVX2 / FMA / BMI2

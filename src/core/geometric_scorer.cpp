@@ -58,6 +58,7 @@ inline void update_top_candidates(
 
 void GeometricWeights::reset() noexcept {
     std::memset(W_c, 0, sizeof(W_c));
+    std::memset(W_c_active, 0, sizeof(W_c_active));
     std::memset(candidate_codebook, 0, sizeof(candidate_codebook));
     std::memset(topology_cost, 0, sizeof(topology_cost));
     std::memset(effective_cost, 0, sizeof(effective_cost));
@@ -65,6 +66,39 @@ void GeometricWeights::reset() noexcept {
     std::memset(rotor_pairs, 0, sizeof(rotor_pairs));
     topology_lambda = 0.3f;
     is_loaded = false;
+    rotor_mode = ROTOR_MODE_ISOLATED;
+}
+
+void GeometricWeights::refresh_active_projection() noexcept {
+    // LEGACY không đọc W_c_active (dùng W_c gốc) -> bỏ qua; chuyển sang ISOLATED sẽ tính lại.
+    if (rotor_mode != ROTOR_MODE_ISOLATED) return;
+    std::memcpy(W_c_active, W_c, sizeof(W_c));
+
+    // z_i = <W_c[i], R h> = <R^T W_c[i], h>, R = R_8∘...∘R_1 (R_1 áp trước).
+    // R^T áp lên hàng: nghịch đảo từng rotor theo thứ tự ngược (m = 7..0): (a,b) -> (c·a + s·b, -s·a + c·b).
+    for (size_t i = 0; i < E9_SUBSPACE_DIM; ++i) {
+        float* row = W_c_active + i * CL12_DIMENSION;
+        for (size_t mm = E9_NUM_ROTORS; mm-- > 0;) {
+            const auto& r = rotor_pairs[mm];
+            const float c = r.cos_th;
+            const float s = r.sin_th;
+            for (size_t k = 0; k < 1024; ++k) {
+                const uint16_t a = r.a[k];
+                const uint16_t b = r.b[k];
+                const float va = row[a];
+                const float vb = row[b];
+                row[a] = c * va + s * vb;
+                row[b] = -s * va + c * vb;
+            }
+        }
+    }
+}
+
+bool GeometricWeights::set_rotor_mode(int32_t mode) noexcept {
+    if (mode != ROTOR_MODE_ISOLATED && mode != ROTOR_MODE_LEGACY) return false;
+    rotor_mode = mode;
+    refresh_active_projection();
+    return true;
 }
 
 void GeometricWeights::precompute_rotors() noexcept {
@@ -174,6 +208,7 @@ bool GeometricWeights::load_from_binary(const char* filepath) noexcept {
     std::fclose(f);
 
     precompute_rotors();
+    refresh_active_projection();
     is_loaded = true;
     return true;
 }
@@ -439,13 +474,16 @@ DecisionResult GeometricScorer::score_and_collapse(
             temp_pairs[m].sin_th = std::sin(th);
         }
         apply_rotors_f32(h_buf, temp_pairs, m_count);
-    } else {
-        // Sử dụng bảng tra cứu 8 rotor đã tiền tính toán của Branch C
+        // Rotor tùy biến thay thế rotor mặc định (hợp đồng cũ) -> chiếu bằng W_c GỐC ở mọi chế độ.
+        project_subspace_64x4096(z_subspace, weights.W_c, h_buf);
+    } else if (weights.rotor_mode == ROTOR_MODE_LEGACY) {
+        // [LEGACY] Đường cũ: áp 8 rotor tiền tính rồi chiếu bằng W_c gốc.
         apply_rotors_f32(h_buf, weights.rotor_pairs, E9_NUM_ROTORS);
+        project_subspace_64x4096(z_subspace, weights.W_c, h_buf);
+    } else {
+        // [ISOLATED] Rotor đã gập vào W_c_active: z = (W_c·R) h, không còn bước rotor lúc chạy.
+        project_subspace_64x4096(z_subspace, weights.W_c_active, h_buf);
     }
-
-    // 3. Chiếu sang không gian con 64 chiều: z = W_c * R(h)
-    project_subspace_64x4096(z_subspace, weights.W_c, h_buf);
 
     // 4. Chấm điểm 4.096 ứng viên & sụp đổ chọn k*
     return score_candidates_masked_argmax(
@@ -463,6 +501,7 @@ void GeometricWeights::update_rotor_angle(size_t rotor_idx, float delta_theta) n
     default_rotors[rotor_idx].angle_theta += delta_theta;
     rotor_pairs[rotor_idx].cos_th = std::cos(default_rotors[rotor_idx].angle_theta);
     rotor_pairs[rotor_idx].sin_th = std::sin(default_rotors[rotor_idx].angle_theta);
+    refresh_active_projection();
 }
 
 void GeometricWeights::set_rotor_angle(size_t rotor_idx, float theta) noexcept {
@@ -470,6 +509,7 @@ void GeometricWeights::set_rotor_angle(size_t rotor_idx, float theta) noexcept {
     default_rotors[rotor_idx].angle_theta = theta;
     rotor_pairs[rotor_idx].cos_th = std::cos(theta);
     rotor_pairs[rotor_idx].sin_th = std::sin(theta);
+    refresh_active_projection();
 }
 
 void GeometricScorer::backproject_subspace_transpose(
@@ -600,12 +640,16 @@ float GeometricScorer::adapt_torque_step(
     }
 
     // 7. Cập nhật góc quay rotor: theta_m -= lr * Torque_m
+    // (Cập nhật trực tiếp rồi tính lại W_c_active MỘT lần, thay vì 8 lần qua update_rotor_angle.)
     for (size_t m = 0; m < E9_NUM_ROTORS; ++m) {
         float delta_th = -learning_rate * local_torques[m];
         // Kẹp delta_th trong ngưỡng [-0.1, 0.1] rad để ổn định số học
         delta_th = std::max(-0.1f, std::min(0.1f, delta_th));
-        weights.update_rotor_angle(m, delta_th);
+        weights.default_rotors[m].angle_theta += delta_th;
+        weights.rotor_pairs[m].cos_th = std::cos(weights.default_rotors[m].angle_theta);
+        weights.rotor_pairs[m].sin_th = std::sin(weights.default_rotors[m].angle_theta);
     }
+    weights.refresh_active_projection();
 
     return margin_loss;
 }

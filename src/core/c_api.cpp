@@ -310,3 +310,17 @@ VIVYQU_API int32_t vivyqu_core_set_rotor_angle(size_t rotor_idx, float angle) {
     g_ctx->e9_weights.set_rotor_angle(rotor_idx, angle);
     return vivyqu::ERR_NONE;
 }
+
+VIVYQU_API int32_t vivyqu_core_set_rotor_mode(int32_t mode) {
+    if (!g_ctx) {
+        int32_t rc = vivyqu_core_init();
+        if (rc != vivyqu::ERR_NONE) return rc;
+    }
+    return g_ctx->e9_weights.set_rotor_mode(mode) ? vivyqu::ERR_NONE : vivyqu::ERR_INPUT_NAN_INF;
+}
+
+VIVYQU_API int32_t vivyqu_core_get_rotor_mode(int32_t* out_mode) {
+    if (!g_ctx || !out_mode) return vivyqu::ERR_INPUT_NAN_INF;
+    *out_mode = g_ctx->e9_weights.rotor_mode;
+    return vivyqu::ERR_NONE;
+}

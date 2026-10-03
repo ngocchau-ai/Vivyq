@@ -204,3 +204,11 @@ Có tune lr đồng đều (3 lần thử/arm, chọn trên val seed 0; hầu h�
 - ACC-1: MLP nhỉnh hơn nhóm tuyến tính; ACC-2: nhóm tuyến tính/E9 thắng MLP rõ. Không có arm nào thống trị cả hai bài. Val→test OOD tụt mạnh ở ACC-1 (~0.39→~0.17).
 - **Hạn chế:** chưa có H5/H6 → **chưa thể kết luận gì về giả thuyết qudit**. H3 ở đây là bản NumPy train được (mặt phẳng rotor = E9), không phải DLL Core. Manifest ACC-1 ghi commit 5a7d4a9, ACC-2/3 ghi c443878 (code đã commit). Latent là P5 (tổng hợp), chưa dùng hidden-state LLM.
 - Lịch sử: 2026-10-03 | Antigravity (Claude Sonnet 5.5) | §8.10 kết quả hoàn chỉnh.
+
+### 8.11 Thực thi cô lập rotor (2026-10-04, chủ dự án duyệt) `[PRODUCTION-READY cho đường quyết định; xem rủi ro]`
+- **Cách cô lập (không xóa):** rotor được gập vào ma trận chiếu `W_c_active = W_c·R(θ)` lúc nạp/đổi góc (`GeometricWeights::refresh_active_projection`). Đường E9 mặc định (`ROTOR_MODE_ISOLATED`) không còn bước rotor lúc chạy. `W_c` gốc, bảng rotor, `adapt_torque`, `get/set_rotor_angle`, rotor tùy biến trong frame **giữ nguyên hợp đồng**. Đường cũ còn nguyên qua `ROTOR_MODE_LEGACY` (ABI mới `vivyqu_core_set_rotor_mode/get_rotor_mode`, Python `engine.set_rotor_mode('legacy')`).
+- **Tương đương:** `tests/test_rotor_isolation.py` 5/5 — 300 mẫu E0 test: quyết định ISOLATED = LEGACY 100%, |Δconfidence| ≤ 9.5e-7; vẫn tương đương sau đổi góc và sau 10 bước thích nghi torque; mode sai bị từ chối, trạng thái không đổi. `pytest tests`: 113 passed.
+- **Hiệu năng (bench_e9_latency, 50 000 vòng, cùng máy, chạy xen kẽ 2 lần):** quyết định p50 20.9 → **17.8 µs**, p99 30.1–38.8 → **25.3–25.5 µs**; k* giống nhau (1985).
+- **Rủi ro / đánh đổi:** `adapt_torque` ở ISOLATED p50 **274 µs** (LEGACY 31.6 µs) vì mỗi bước phải tính lại `W_c_active` (64×8×1024 phép quay vô hướng). Vẫn dưới ngưỡng test 500 µs, nhưng dòng in “SLA < 60 µs” của `test_hamiltonian_torque_descent` báo FAIL ở ISOLATED. Khuyến nghị: phiên thích nghi online dùng `legacy`. `[HIỆU NĂNG — CHƯA TỐI ƯU]` backlog: vector hóa refresh hoặc cập nhật lười.
+- Working set tăng 1 MiB (thêm `W_c_active`); đường nóng ISOLATED vẫn chỉ đọc `W_c_active` + codebook (~2 MiB).
+- Lịch sử: 2026-10-04 | Antigravity (Claude Opus 5.5) | §8.11 cô lập rotor.

@@ -1,4 +1,4 @@
-# [!IMPORTANT]
+﻿# [!IMPORTANT]
 > **QUY ƯỚC BẮT BUỘC DÀNH CHO AGENT KẾ THỪA & CHỈNH SỬA TÀI LIỆU:**
 > 1. **Ghi chú bắt buộc (Changelog):** Bất kỳ agent nào chỉnh sửa tài liệu này PHẢI bổ sung ghi chú tại mục Lịch Sử Thay Đổi (Tên/ID Agent, thời gian, lý do thay đổi).
 > 2. **Chỉ cô lập, KHÔNG xóa bỏ:** TUYỆT ĐỐI KHÔNG xóa bỏ các nội dung/kiến trúc cũ. Toàn bộ nội dung muốn thay đổi phải được đóng khung cô lập và đánh dấu `[ISOLATED / DEPRECATED / REPLACED]`.
@@ -51,6 +51,10 @@
    - Tốc độ thực thi thực nghiệm: Toàn bộ chu kỳ forward + loss + backproject transpose $W_c^T$ + torque calculation + rotor update đạt $\text{p50} = 48.60\ \mu\text{s}$ trên 1 core CPU x86-64 AVX2/FMA.
    - Đã kiểm chứng tính hội tụ thực tế: Giảm 29.8% margin loss chỉ sau 25 chu kỳ thích nghi online.
 
+8. **[2026-10-04] Cô lập rotor Givens khỏi đường quyết định E9 mặc định** (chủ dự án duyệt):
+   - Căn cứ: bộ nghiệm thu ACC-1..3 (`docs/ACCEPTANCE_SUITE_ACC1_3_QUDIT_HYPOTHESIS.md` §8.10): H3 (có rotor) không thắng H4 (bỏ rotor) ở cả 3 bài.
+   - Thực thi (§8.11): gập rotor vào `W_c_active = W_c·R(θ)`; mặc định `ROTOR_MODE_ISOLATED`; đường cũ giữ qua `ROTOR_MODE_LEGACY`. Quyết định tương đương 100% (300 mẫu), p50 20.9 → 17.8 µs.
+   - Ảnh hưởng tới Quyết định 1 và 7: rotor không còn là bước runtime; Hamiltonian Torque Descent vẫn chạy nhưng ở ISOLATED tốn p50 274 µs/bước (LEGACY 31.6 µs). Quyết định 1 và 7 **không bị xóa**, chỉ được chú thích bởi Quyết định 8.
 ---
 
 ## 2. LỊCH SỬ THAY ĐỔI (AUDIT TRAIL)
@@ -60,4 +64,4 @@
 | 2026-09-27 12:00 | Antigravity IDE | Khởi tạo tài liệu các quyết định bền vững VivyQu. |
 | 2026-09-27 18:30 | Antigravity IDE | Cập nhật Quyết định 1: Khóa Nhánh C E9-v2 sau khi tích hợp trọn gói vào C++ Core và đối chiếu chéo 100% trên 1500 mẫu test. |
 | 2026-09-27 19:15 | Antigravity IDE | Bổ sung Quyết định 6 (SHM Daemon E9 Mode) và Quyết định 7 (Hamiltonian Torque Descent thích nghi trực tuyến p50 = 48.60 µs). |
-
+| 2026-10-04 06:00 | Antigravity IDE (Claude Opus 5.5) | Bổ sung Quyết định 8: cô lập rotor (bằng chứng ACC-1..3 §8.10, thực thi §8.11). |

@@ -26,6 +26,7 @@ from .types import (
     MODE_FALLBACK_LOWRANK,
     MODE_GEOMETRIC_E9,
     ERR_NONE,
+    ERR_CORE_TIMEOUT,
     ERR_ALL_CONSTRAINTS_VIOLATED,
     VivyquInputFrame,
     VivyquOutputFrame,
@@ -143,6 +144,12 @@ class VivyquEngine:
             ]
             self._lib.vivyqu_core_set_rotor_angle.restype = ctypes.c_int32
 
+        if hasattr(self._lib, "vivyqu_core_set_rotor_mode"):
+            self._lib.vivyqu_core_set_rotor_mode.argtypes = [ctypes.c_int32]
+            self._lib.vivyqu_core_set_rotor_mode.restype = ctypes.c_int32
+            self._lib.vivyqu_core_get_rotor_mode.argtypes = [ctypes.POINTER(ctypes.c_int32)]
+            self._lib.vivyqu_core_get_rotor_mode.restype = ctypes.c_int32
+
     def load_e9_weights(self, weights_bin_path: str) -> bool:
         """Nạp trọng số mô hình E9 Geometric Scorer từ file nhị phân."""
         if hasattr(self._lib, "vivyqu_core_load_e9_weights"):
@@ -197,6 +204,25 @@ class VivyquEngine:
         """Đặt trực tiếp góc quay cho rotor rotor_idx."""
         rc = self._lib.vivyqu_core_set_rotor_angle(ctypes.c_size_t(rotor_idx), ctypes.c_float(angle))
         return rc == ERR_NONE
+
+    # [2026-10-04] Rotor bị cô lập khỏi đường E9 mặc định (gập vào W_c); "legacy" = áp rotor lúc chạy như cũ.
+    ROTOR_MODES = {"isolated": 0, "legacy": 1}
+
+    def set_rotor_mode(self, mode: str) -> bool:
+        """Đặt chế độ rotor: 'isolated' (mặc định) hoặc 'legacy'. Sai tên -> ValueError."""
+        if mode not in self.ROTOR_MODES:
+            raise ValueError(f"rotor mode không hợp lệ: {mode!r}; chọn {sorted(self.ROTOR_MODES)}")
+        if not hasattr(self._lib, "vivyqu_core_set_rotor_mode"):
+            raise NotImplementedError("vivyqu_core_set_rotor_mode not found in library")
+        return self._lib.vivyqu_core_set_rotor_mode(ctypes.c_int32(self.ROTOR_MODES[mode])) == ERR_NONE
+
+    def get_rotor_mode(self) -> str:
+        if not hasattr(self._lib, "vivyqu_core_get_rotor_mode"):
+            raise NotImplementedError("vivyqu_core_get_rotor_mode not found in library")
+        val = ctypes.c_int32(-1)
+        if self._lib.vivyqu_core_get_rotor_mode(ctypes.byref(val)) != ERR_NONE:
+            raise RuntimeError("vivyqu_core_get_rotor_mode failed (core chưa init?)")
+        return {v: k for k, v in self.ROTOR_MODES.items()}[val.value]
 
 
     @property
@@ -334,6 +360,21 @@ class VivyquEngine:
         Đường dẫn thực thi siêu tốc (Sub-10µs End-to-End) dành cho Cầu Treo & Game Loop.
         Trả về trực tiếp chỉ số quyết định k* mà không tạo dataclass trung gian.
         """
+        # Boundary contract (fail closed): memmove below reads fixed byte counts.
+        if (latent_vector.dtype != np.float64 or latent_vector.size != CL12_DIMENSION
+                or not latent_vector.flags.c_contiguous):
+            raise ValueError(
+                f"step_fast: latent_vector must be contiguous float64[{CL12_DIMENSION}], "
+                f"got dtype={latent_vector.dtype} size={latent_vector.size}"
+            )
+        if constraint_mask_bytes is not None and (
+                constraint_mask_bytes.dtype != np.uint8
+                or constraint_mask_bytes.size != CONSTRAINT_MASK_BYTES
+                or not constraint_mask_bytes.flags.c_contiguous):
+            raise ValueError(
+                f"step_fast: constraint_mask_bytes must be contiguous uint8[{CONSTRAINT_MASK_BYTES}]"
+            )
+
         self._seq_id += 1
         self._in_frame.magic_header = MAGIC_INPUT_FRAME
         self._in_frame.sequence_id = self._seq_id

@@ -44,3 +44,8 @@ VIVYQU_API int32_t vivyqu_core_get_rotor_angle(size_t rotor_idx, float* out_angl
 // Đặt trực tiếp góc quay của rotor
 VIVYQU_API int32_t vivyqu_core_set_rotor_angle(size_t rotor_idx, float angle);
 
+// [2026-10-04] Chế độ rotor của đường E9 mặc định: 0 = ISOLATED (mặc định, rotor gập vào W_c),
+// 1 = LEGACY (áp rotor lúc chạy như cũ). Mode khác -> ERR_INPUT_NAN_INF, trạng thái không đổi.
+VIVYQU_API int32_t vivyqu_core_set_rotor_mode(int32_t mode);
+VIVYQU_API int32_t vivyqu_core_get_rotor_mode(int32_t* out_mode);
+
