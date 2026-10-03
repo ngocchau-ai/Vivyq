@@ -1,0 +1,1 @@
+# Package ACC-1..3 (xem docs/ACCEPTANCE_SUITE_ACC1_3_QUDIT_HYPOTHESIS.md)

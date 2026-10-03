@@ -1,0 +1,155 @@
+> [!IMPORTANT]
+> **QUY ƯỚC BẮT BUỘC DÀNH CHO AGENT KẾ THỪA & CHỈNH SỬA TÀI LIỆU:**
+> 1. **Ghi chú bắt buộc (Changelog):** Bất kỳ agent nào chỉnh sửa tài liệu này PHẢI bổ sung ghi chú tại mục Lịch Sử Thay Đổi (Tên/ID Agent, thời gian, lý do thay đổi).
+> 2. **Chỉ cô lập, KHÔNG xóa bỏ:** TUYỆT ĐỐI KHÔNG xóa bỏ các nội dung/kiến trúc cũ. Toàn bộ nội dung muốn thay đổi phải được đóng khung cô lập và đánh dấu `[ISOLATED / DEPRECATED / REPLACED]`.
+> 3. **Đồng bộ D:\2brain đầy đủ:** Đồng bộ và cập nhật đầy đủ mọi thay đổi, quyết định và bài học vào kho tri thức trung tâm `D:\2brain`.
+
+# ACCEPTANCE SUITE ACC-1..3 — Nghiệm thu giả thuyết Qudit / N luồng giả thuyết
+
+**Trạng thái:** `[DRAFT — CHỜ DUYỆT PRE-REGISTRATION]` · **Ngày:** 2026-10-03 · **Cấp độ dự án:** `[PROTOTYPE]`
+**Bối cảnh:** review 2026-10-03 phát hiện benchmark E0/E9 bị vòng tròn (nhãn sinh từ cùng hàm rank-64 tuyến tính với Core). Suite này thay thế vai trò "bằng chứng nhận thức"; **không** thay thế các test ABI/IPC hiện có.
+**Quyết định chủ dự án (2026-10-03):** VivyQu là não quyết định độc lập với Vivy/Vyvy; quy tắc Vytrading "không thuật toán cứng" **không** áp dụng cho dự án này.
+
+## 0. Giả định & định nghĩa
+
+- **[GIẢ ĐỊNH] "N luồng giả thuyết"** = N *arm* kiến trúc/biểu diễn cạnh tranh được đánh giá trên cùng dữ liệu (không phải N luồng chạy song song trong runtime). Biến thể runtime (Top-K = K giả thuyết đồng thời do Core trả về) được đo riêng bằng metric `pass@K` (§4). Cần chủ dự án xác nhận nghĩa này.
+- Ứng viên = 12-bit (0..4095) = 6 qudit 4 trạng thái = 12 qubit. Mọi tác vụ phải có **verifier xác định (exact)** hoặc oracle tính được; không dùng nhãn do mô hình sinh.
+
+## 1. Các arm (luồng giả thuyết) — chung cho cả ba bài
+
+| Arm | Mô tả | Vai trò |
+|---|---|---|
+| **H0** | Random / majority class | Sàn |
+| **H1** | Linear probe rank-64 + codebook + mask (≈ Baseline A2) | Đối chứng cổ điển rẻ nhất |
+| **H2** | MLP, cùng số tham số với H4 | Đối chứng phi tuyến công bằng |
+| **H3** | Core E9 hiện tại (rotor Givens 8 + W_c 64×4096) | Hệ đang có |
+| **H4** | Core bỏ rotor (gộp vào W_c) | Kiểm tra dư thừa rotor |
+| **H5** | **Qudit-hybrid**: 6 qudit×4 trạng thái, tương tác cặp/ba giữa qudit (tích tensor có cấu trúc), cùng số tham số | Giả thuyết cần chứng minh |
+| **H6** | Qubit-12 (2¹²) cùng số tham số với H5 | Tách "qudit" khỏi "tensor-structure" |
+| **H7** | Bộ giải cổ điển exact (vét cạn 4096) | Trần chất lượng, không phải đối thủ về khái quát |
+
+Quy tắc: tham số của H2/H5/H6 phải khớp H3 ±5% (báo cáo số thực). Chọn hyper-parameter chỉ trên tập `val`; **test OOD chạm đúng 1 lần**.
+
+## 2. Ba tác vụ
+
+### ACC-1 — Tô 4 màu đồ thị 6 đỉnh có ràng buộc (đã duyệt)
+- **Ứng viên:** phép gán màu `c ∈ {0..3}⁶` → index `Σ cᵢ·4ⁱ`.
+- **Instance:** đồ thị 6 đỉnh + trọng số cạnh + một số ràng buộc cứng "đỉnh i ≠ màu m" (→ mask thật). Chi phí = tổng trọng số cạnh bị xung đột.
+- **Nhãn:** phép tô tối ưu (min cost, tie-break xác định) từ H7 — exact.
+- **Split OOD:** train trên đồ thị thưa (mật độ ≤0.4); val mật độ 0.4–0.6; **test** mật độ ≥0.7 và họ có cấu trúc (hai phía, bánh xe, K₆ perturbed) chưa thấy.
+- **Metric:** top-1 accuracy, *cost-regret* (cost chọn − cost tối ưu)/cost tối ưu, tỷ lệ chọn vi phạm mask (phải = 0), `pass@8`.
+- **Kết quả đã biết:** có (exact) → dùng làm **kiểm tra sanity + khái quát hóa**.
+
+### ACC-2 — Vật lý: trạng thái cơ bản của mô hình clock/Potts 4 trạng thái có frustration (kết quả mở)
+- **Ứng viên:** cấu hình 6 spin 4 trạng thái (Z₄ clock) trên đồ thị bất kỳ → 4096 trạng thái. Hamiltonian `H = −Σ Jᵢⱼ cos(π(sᵢ−sⱼ)/2) − Σ hᵢ cos(π sᵢ/2 + φᵢ)`.
+- **Instance:** (J, h, φ) lấy mẫu; vector hidden-state mã hóa instance (§3).
+- **Nhãn:** ground state exact bằng vét cạn 4096; kèm **khoảng cách năng lượng** (gap) và **độ suy biến**.
+- **Phần "mở" (không biết trước đáp án):**
+  1. *Phase-boundary mapping:* quét độ frustration f ∈ [0,1] (tỷ lệ J âm). Câu hỏi mở: arm nào giữ accuracy khi gap → 0? Đường cong accuracy(f) của từng arm được **vẽ ra, không giả định hình dạng**.
+  2. *Degenerate ground states:* khi suy biến >1, Core có trả về **tập** giả thuyết chứa mọi ground state trong Top-8 không (`recall@8` trên tập suy biến). Đây là phép thử trực tiếp cho "N luồng giả thuyết đồng thời".
+  3. *Quantum extension (tùy chọn, G+):* thêm transverse field Γ (6 qudit, Hilbert 4⁶=4096 — **khớp chính xác** với Core), ground state bằng chéo hóa exact (ma trận 4096×4096, vài giây bằng `scipy.sparse.linalg.eigsh`). Nhãn = trạng thái cơ bản vector; metric = fidelity |⟨ψ_pred|ψ₀⟩|² và sai số năng lượng. Đây là bài duy nhất mà biểu diễn "trạng thái lượng tử mô phỏng" có thể thắng cấu trúc cổ điển một cách có ý nghĩa.
+- **Metric chính:** top-1 accuracy theo đoạn gap; regret năng lượng; `recall@8` suy biến; (quantum) fidelity.
+- **Ngưỡng báo cáo:** trung vị theo 5 seed + CI 95% bootstrap.
+
+### ACC-3 — Toán: logarit rời rạc & cấu trúc chu kỳ trên 𝔽ₚ (kết quả mở)
+- **Ứng viên:** x ∈ [0, 4095], bài toán `g^x ≡ h (mod p)`, p nguyên tố ∈ (2,4096] (hoặc bậc nhóm ≤4096).
+- **Instance:** (g, h, p) → mã hóa thành prompt văn bản → hidden-state.
+- **Nhãn/verifier:** exact bằng tính lũy thừa; verifier chấp nhận *mọi* x thỏa phương trình (đáp án không duy nhất khi ord(g) < p−1) — mask động = tập đáp án hợp lệ.
+- **Lý do chọn:** cấu trúc *tuần hoàn/pha* là nơi giả thuyết "pha phức/qudit" có cơ sở lý thuyết (biến đổi Fourier trên Z_n), và là nơi probe tuyến tính bị cho là yếu.
+- **Phần "mở":**
+  1. *Generalize qua p chưa thấy:* train trên p ≤ 1024, test p ∈ (2048, 4096]. Kết quả chưa biết.
+  2. *Có "grokking" Fourier không:* so sánh phổ Fourier của W_c học được với đặc trưng đã biết của mạng học modular arithmetic; báo cáo trung thực nếu không có.
+  3. *Phân tách theo cấu trúc nhóm:* accuracy theo `ord(g)` và `p−1` có/không smooth (nhiều thừa số nhỏ).
+- **Kỳ vọng trung thực:** nhiều khả năng **mọi arm thất bại OOD** ở p lớn. Đó là kết quả hợp lệ — bài này đo *ranh giới* chứ không nhằm thắng. `[GIẢ ĐỊNH — cần chạy thật]`.
+
+## 3. Pipeline hidden-state (bắt buộc) + phương án dự phòng
+
+**Mục tiêu:** vector 4096 chiều mã hóa instance, lấy từ LLM thật, đi vào Core qua cùng ABI (float64[4096], contiguous).
+
+| Phương án | Mô tả | Khi dùng |
+|---|---|---|
+| **P1 (chính)** | Model có hidden dim = 4096 (ví dụ họ LLaMA-3-8B); residual stream của **token cuối**, layer ℓ ∈ {mid, ¾, last} chọn trên `val`; prompt định dạng cố định; ghi `model_sha`, `layer`, `prompt_template_sha`, `dtype/quant` | Mặc định |
+| **P2** | Model hidden dim ≠ 4096: đệm 0 hoặc **PCA/ngẫu nhiên-trực-giao cố định** về 4096 (fit trên train), ghi lại phép chiếu | Gemma-2 (kiểm tra hidden dim thực của biến thể dùng) |
+| **P3** | Embedding model 4096 chiều chuyên dụng (không phải generative) | Không lấy được hidden-state từ backend (ví dụ llama.cpp không expose layer) |
+| **P4** | Mean-pool nhiều token/nhiều layer, nối rồi chiếu | Token cuối quá nhiễu |
+| **P5 (kiểm soát, không phải sản phẩm)** | Latent **tổng hợp có cấu trúc**: đặc trưng instance → ánh xạ trực giao cố định → 4096 | Tách "LLM không mã hóa instance" khỏi "Core không học được"; cũng là đường chạy khi chưa có GPU |
+| **P6 (kiểm soát âm)** | Hidden-state của prompt đã **xáo nhãn/xáo instance** | Phải ra ~ngẫu nhiên; nếu không → rò rỉ |
+
+**Gate G-ENC (chạy trước mọi so sánh arm):** probe tuyến tính (ridge) từ hidden-state → đặc trưng instance (ví dụ ma trận kề flatten, hoặc p, g, h). Nếu R² trên val < 0.5 → hidden-state **không** mang thông tin instance → đổi layer/prompt/phương án; **cấm** kết luận về Core khi G-ENC fail.
+
+> [!WARNING]
+> LLM thường **không** biểu diễn tốt đồ thị/số học modular trong hidden-state (đặc biệt ACC-3). G-ENC fail là kịch bản thật, không phải ngoại lệ. Vì vậy P5 chạy song song từ ngày đầu để mọi kết luận về Core có đường chứng minh độc lập với LLM.
+
+## 4. Metric chung và tiêu chí pass (pre-register — KHÓA TRƯỚC KHI CHẠY)
+
+- **Seeds:** ≥5 (khởi tạo + split), báo cáo trung vị + CI 95% bootstrap.
+- **Fail-closed:** tỷ lệ chọn ứng viên ngoài mask = 0 ở mọi arm (vi phạm → arm bị loại khỏi bảng xếp hạng).
+- **Giả thuyết H5 (qudit) được coi là ủng hộ** khi, trên **test OOD** của ít nhất 2/3 bài: top-1 hoặc regret của H5 tốt hơn **cả** H1, H2, H4, H6 với CI 95% không chồng lấn, **và** G-ENC pass (hoặc có cùng kết quả trên P5).
+- **Giả thuyết H3 (Core+rotor) được coi là có giá trị** nếu thắng H4 (bỏ rotor) theo cùng chuẩn; nếu không → ghi `[ROTOR DƯ THỪA]` và đề xuất cô lập (không xóa) phần rotor.
+- **Kết quả âm là kết quả:** nếu H5 không thắng, cập nhật README thành `[GIẢ THUYẾT QUDIT CHƯA ĐƯỢC ỦNG HỘ]`; không đổi tiêu chí sau khi thấy dữ liệu.
+- **Báo cáo bắt buộc kèm:** manifest (commit SHA, DLL SHA-256, compiler/flags, CPU, seeds, dataset SHA, model SHA, layer, prompt template SHA).
+
+## 5. Rủi ro & phản biện (Devil's Advocate)
+
+| Rủi ro | Hệ quả | Giảm thiểu |
+|---|---|---|
+| Bộ không gian 4096 quá nhỏ → vét cạn thắng mọi arm học | "Core vô dụng" | Đúng — thừa nhận; giá trị chỉ ở khái quát/hiệu quả tham số, không ở tốc độ giải |
+| Hidden-state không mã hóa instance (ACC-3 đặc biệt) | Mọi arm ~ngẫu nhiên | G-ENC + P5 |
+| Số tham số khớp nhưng kiến trúc H5 được "tune" nhiều hơn | Thiên vị | Cùng ngân sách tune/arm; ghi số lần thử |
+| Chọn ngưỡng sau khi thấy dữ liệu | p-hacking | Khóa §4 bằng commit trước khi chạy |
+| ACC-2 quantum extension: Hamiltonian 4096² nặng | Chậm | `eigsh` trên ma trận thưa; giới hạn số instance |
+| Test OOD bị rò rỉ qua val | Kết quả ảo | Test chạm 1 lần; hash tập test |
+
+## 6. Kế hoạch thực thi (thứ tự, mỗi bước có cổng verify)
+
+1. **S0** — Đóng băng spec này (commit) + khóa §4. *Verify:* hash commit.
+2. **S1** — Bộ sinh dữ liệu + verifier exact cho ACC-1..3 (`scripts/acc/`), test tự động rằng verifier khớp vét cạn trên 100% mẫu. *Verify:* pytest.
+3. **S2** — Harness arm H0–H7 với đếm tham số; chạy trên P5 (không cần GPU). *Verify:* bảng kết quả + manifest.
+4. **S3** — Trích hidden-state (P1→P6), G-ENC. *Verify:* R² báo cáo.
+5. **S4** — Chạy lại toàn bộ trên hidden-state thật; một lượt test OOD.
+6. **S5** — Báo cáo + cập nhật README trạng thái theo kết quả (kể cả âm) + đồng bộ `D:\2brain`.
+
+## 7. Câu hỏi còn mở cho chủ dự án
+1. Xác nhận định nghĩa "N luồng giả thuyết" ở §0 (N arm cạnh tranh, kèm `pass@K` cho đa-giả-thuyết trong runtime)?
+2. Model nào cho hidden-state (hidden dim thực tế, và chạy bằng backend nào: HF transformers hay llama.cpp)? GPU/VRAM có sẵn?
+3. Chạy `ACC-2` quantum extension (chéo hóa exact) ngay từ đầu hay để giai đoạn sau?
+
+## Lịch sử thay đổi
+- 2026-10-03 | Antigravity (Claude Sonnet 5.5) | Tạo mới: bộ nghiệm thu ACC-1..3, pipeline hidden-state + phương án dự phòng, tiêu chí pre-register. Lý do: benchmark E0/E9 vòng tròn (review 2026-10-03).
+- 2026-10-03 | Antigravity (Claude Sonnet 5.5) | Revision #2 (§8): phân pha qubit-trước, arm tương hỗ, mô hình Gemma chạy CPU, chọn ACC-2 quantum extension ở cuối pha Q1. Lý do: quyết định chủ dự án 18:43. §0–§7 giữ nguyên; điểm bị thay thế ghi rõ trong §8.
+
+## 8. REVISION #2 (2026-10-03) — theo quyết định chủ dự án
+
+### 8.1 Ý nghĩa "luồng giả thuyết" `[REPLACES §0 giả định đầu — bản cũ giữ nguyên]`
+Chủ dự án: đây là **lý thuyết mở**; luồng giả thuyết = N trạng thái (mặc định N=4 hoặc 6 theo qubit), có thể **cạnh tranh** (+`pass@K`) **hoặc tương hỗ**. Suite phải đo cả hai chế độ, không chọn trước:
+
+| Chế độ | Arm | Đo gì |
+|---|---|---|
+| Cạnh tranh | chọn 1 trong N luồng (argmax/mask) | top-1, `pass@K` |
+| Tương hỗ | N luồng cùng đóng góp: tổng có trọng số / mixture-of-experts / bỏ phiếu tuyến tính trên N luồng | top-1, regret, đa dạng (độ tương quan lỗi giữa các luồng) |
+| Tương hỗ-có-cổng | luồng này điều biến luồng kia (tích tensor có cấu trúc, ý tưởng H5) | so với tương hỗ cộng tính để tách "tương tác" khỏi "ensemble" |
+
+Chỉ số then chốt `Δ_interaction` = (tương hỗ-có-cổng) − (tương hỗ cộng tính) với cùng số tham số: nếu ≈0 thì phần "qudit/entangle" không đóng góp ngoài ensemble.
+
+### 8.2 Phân pha: qubit trước, qudit sau `[REPLACES thứ tự §6 từ S2 trở đi]`
+- **Pha Q1 — Qubit baseline:** N luồng = N qubit (N∈{4,6,12}); mọi arm cạnh tranh/tương hỗ trên ACC-1..3 (P5 latent tổng hợp, CPU). Mục tiêu: tìm cấu hình qubit tốt nhất và biết nó **thất bại ở đâu**.
+- **Pha Q2 — Phương án bổ sung:** chỉ thiết kế biến thể từ chỗ Q1 thất bại (ví dụ ghép 2 qubit thành 1 qudit-4, tương tác bậc 3, tham số hóa pha). Mỗi biến thể là một arm mới, khóa tiêu chí trước khi chạy.
+- **Pha Q3 — Chu trình qudit:** chỉ dựng khi ≥1 biến thể Q2 thắng Q1 theo §4. Nếu không: ghi nhận kết quả âm.
+- **ACC-2 quantum extension (transverse field):** chọn đặt ở **cuối Q1** làm bài thử qubit/qudit duy nhất có nhãn lượng tử exact (Hilbert 2¹² = 4⁶ = 4096).
+
+### 8.3 Hidden-state với Gemma "4eb", không GPU rời `[PHẠM VI P1/P2]`
+- `[GIẢ ĐỊNH]` "gemma4 4eb" = biến thể Gemma cỡ ~4B tham số hiệu dụng (tên chính xác và hidden dim **chưa xác minh** — cần chủ dự án cung cấp tên file/repo model). Khả năng cao hidden dim **≠ 4096** → dùng **P2** (chiếu cố định về 4096, fit trên train, lưu ma trận chiếu + SHA).
+- Phần cứng không GPU rời: chạy CPU, lượng tử hóa nếu cần. `[HIỆU NĂNG — CHƯA ĐO]`: ước lượng ~10⁴ prompt ngắn × một forward CPU mỗi prompt; phải đo thời gian/prompt trên máy thật trước khi cam kết kích thước tập (đề xuất: bắt đầu 2.000 instance/bài, cache hidden-state ra `.npy` kèm SHA, chỉ trích xuất 1 lần).
+- Phương án dự phòng bổ sung cho máy yếu (thứ tự ưu tiên): **P5** (tổng hợp, chạy ngay) → **P3** (embedding model nhỏ chuyên dụng chiếu về 4096) → **P7 (mới)**: model nhỏ hơn cùng họ (≤1–2B) → **P8 (mới)**: trích hidden-state theo lô qua đêm + checkpoint từng 100 prompt (tiếp tục được khi gián đoạn).
+- **G-ENC vẫn bắt buộc.** Với model nhỏ + CPU, khả năng G-ENC fail ở ACC-3 cao hơn; khi đó kết luận về Core chỉ dựa P5.
+
+### 8.4 Việc đã làm cùng phiên
+- Sửa `engine.py` (import `ERR_CORE_TIMEOUT`, guard `step_fast`) + `tests/test_engine_boundary_negative.py`; root tests 80 passed.
+
+### 8.5 Tiến độ S1 (2026-10-03, phiên tiếp nối) `[PROTOTYPE]`
+- Đã tạo `scripts/acc/` (`common.py`, `acc1_coloring.py`, `acc2_clock.py`, `acc3_dlog.py`) + `tests/test_acc_verifiers.py`: 14/14 PASS. Mỗi verifier tham chiếu (thuần Python) được đối chiếu với solver vectorized trên **toàn bộ 4096 ứng viên** (ACC-1, ACC-3) hoặc mẫu bước 7 (ACC-2).
+- Lỗi phát hiện & sửa: ACC-1 sinh đồ thị chỉ theo xác suất cạnh nên mật độ thực vượt khoảng split → thêm rejection sampling theo mật độ thực (sparse ≤0.4, mid 0.4–0.6, dense ≥0.7).
+- **Chưa làm:** S0 (commit đóng băng spec/§4 — chờ chủ dự án), ACC-2 quantum extension, S2 harness arm H0–H7, S3 hidden-state.
+- `[GIẢ ĐỊNH]` còn mở: tên/hidden-dim chính xác của "gemma4 4eb"; chưa cung cấp file model.
+- Test flaky có sẵn, không do thay đổi này: `tests/test_shm_ipc.py` timeout 500 µs ngẫu nhiên (1/3 lần chạy riêng; `[CẦN THEO DÕI]`).
+
