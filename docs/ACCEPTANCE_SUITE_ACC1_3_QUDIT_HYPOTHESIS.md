@@ -164,3 +164,10 @@ Chỉ số then chốt `Δ_interaction` = (tương hỗ-có-cổng) − (tương
 - **Diễn giải trung thực:** trên P5 (latent là phép xoay trực giao của ~40 đặc trưng) H1/H2 chỉ hơn prior nhẹ ở ACC-1 và hơn rõ ở ACC-2; ACC-3 thất bại hoàn toàn. `[GIẢ ĐỊNH]` có thể do chưa tune (lr/epoch cố định, full-batch) — chưa chứng minh là giới hạn kiến trúc. Chưa được rút kết luận về H3–H6.
 - **Hạn chế:** H7 là tautology (oracle chấm đúng theo định nghĩa) — chỉ để kiểm tra pipeline. Manifest `commit` trong JSON trỏ S0 (3680245) vì code S2 chưa commit lúc chạy. Chưa có arm H3 (Core E9), H4, H5, H6; chưa có G-ENC (chỉ cần khi dùng hidden-state thật). Tune hyper-parameter chưa làm (cần ngân sách bằng nhau/arm theo §5).
 - Lịch sử: 2026-10-03 | Antigravity (Claude Sonnet 5.5) | §8.6 kết quả S2.
+
+### 8.7 Model hidden-state đã xác minh (2026-10-03) `[CẬP NHẬT §8.3 — thay giả định]`
+- File: `D:\models\gemma4-e4b\vivy-gemma-e4b-q4km.gguf` (9 608 338 848 B, Q4_K_M, `general.file_type=15`). Đọc metadata bằng `gguf` (pip, mới cài vào môi trường Python hệ thống).
+- Kiến trúc `gemma4`: **embedding_length = 2560** (≠ 4096 → bắt buộc **P2**), 42 block, 8 head / 2 kv-head, `embedding_length_per_layer_input=256`, context 131072, 2131 tensor, kèm tower vision (768d) và audio (1024d) — không dùng cho ACC.
+- Backend: `D:\models\bin\llama-server.exe` / `llama-cli.exe` có sẵn; `llama_cpp` Python chưa cài; `torch 2.13.0+cpu` có nhưng KHÔNG có trọng số HF. llama-server chỉ lộ embedding đã pooling của lớp cuối (qua `--embeddings`) — **không lấy được residual theo layer mid/¾** như P1 yêu cầu. [GIẢ ĐỊNH — chưa verify]: cần thử endpoint thực tế; nếu cần hidden-state theo layer phải dùng eval-callback C++ hoặc cài llama-cpp-python (chưa làm).
+- Hệ quả: P2 dùng embedding lớp cuối 2560d → chiếu cố định lên 4096 (fit trên train, lưu ma trận + SHA). Chưa chạy trích xuất; `[HIỆU NĂNG — CHƯA ĐO]`. G-ENC bắt buộc trước mọi kết luận.
+- Lịch sử: 2026-10-03 | Antigravity (Claude Sonnet 5.5) | §8.7 xác minh model.
