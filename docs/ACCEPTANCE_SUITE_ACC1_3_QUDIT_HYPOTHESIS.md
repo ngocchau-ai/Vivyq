@@ -118,6 +118,7 @@ Quy tắc: tham số của H2/H5/H6 phải khớp H3 ±5% (báo cáo số thực
 - 2026-10-03 | Antigravity (Claude Sonnet 5.5) | Tạo mới: bộ nghiệm thu ACC-1..3, pipeline hidden-state + phương án dự phòng, tiêu chí pre-register. Lý do: benchmark E0/E9 vòng tròn (review 2026-10-03).
 - 2026-10-03 | Antigravity (Claude Sonnet 5.5) | Revision #2 (§8): phân pha qubit-trước, arm tương hỗ, mô hình Gemma chạy CPU, chọn ACC-2 quantum extension ở cuối pha Q1. Lý do: quyết định chủ dự án 18:43. §0–§7 giữ nguyên; điểm bị thay thế ghi rõ trong §8.
 - 2026-10-04 | Antigravity (Claude Opus 5.5) | §8.11 cô lập rotor; §8.12 pre-register H5/H6 + Δ_interaction (tiêu chí khóa bằng code trước khi chạy). Lý do: chủ dự án duyệt 2026-10-04 05:54.
+- 2026-10-04 | Antigravity (Claude Opus 5.5) | §8.13 pre-register S2d (H+V, lệch cấu trúc, seed 5–9); §8.14 khung ACC-Q (statevector / MPS, 8/12/24 qudit) + đính chính MPS argmax. Kèm ADR `ADR_2026-10-04_PIGGYBACK_HOST_CPP_RUNTIME.md`. Lý do: chủ dự án duyệt 06:40 và 06:51.
 
 ## 8. REVISION #2 (2026-10-03) — theo quyết định chủ dự án
 
@@ -249,5 +250,36 @@ Có tune lr đồng đều (3 lần thử/arm, chọn trên val seed 0; hầu h�
 
 **Quy trình chung:** P5, n = 2000/500/500, 200 epoch, lưới lr và 3 lần thử như §8.12. Arm đã tune giữ nguyên lr từ `acc_s2_tune_*` / `acc_s2c_tune_*`; arm mới (`H5_qudit_misaligned`, `H6_qubit_order4`) tune 3 lần trên val seed 0 (không chạm test). Mỗi arm/seed chấm test 1 lần. Lưu `ok`, `passk_ok` theo từng mẫu. Kết quả ghi vào `results/acc_s2d_*.json`. Code và test của `analyze_s2d.py` phải commit **trước** khi chạy seed 5–9.
 - Lịch sử: 2026-10-04 | Antigravity (Claude Opus 5.5) | §8.13 pre-register S2d (D1 H+V, D2 lệch cấu trúc).
+
+### 8.14 PRE-REGISTER ACC-Q — Hai hướng mô phỏng chồng chập, quy mô 8/12/24 qudit (2026-10-04 06:55, chủ dự án duyệt) `[KHÓA KHUNG ĐÁNH GIÁ — chưa có code; chạy sau ADR piggyback]`
+**Mục tiêu (chủ dự án):** mô phỏng đặc tính **chồng chập** (superposition) của qubit/qudit, **để ngỏ ít nhất 2 hướng**, không chọn trước hướng thắng. Mốc 32 qubit = suy luận từ giới hạn RAM.
+
+**Ràng buộc phần cứng đã đo (2026-10-04):** RAM 23.3 GB, L3 16 MB, 6 lõi / 12 luồng (Ryzen AI 5 340). Statevector complex64 = 8 B × 2ⁿ:
+| qubit (qudit-4) | Bộ nhớ | Vai trò |
+|---|---|---|
+| 16 (8) | 512 KiB | Runtime, cỡ µs–ms |
+| 20 (10) | 8 MiB (vừa L3) | **Trần runtime "ms"** |
+| 24 (12) | 128 MiB | Nghiên cứu |
+| 30 (15) | 8 GiB | Trần nghiên cứu thực tế khi Gemma (8.6 GB) đang nạp |
+| 32 (16) | 32 GiB | **Vượt RAM** → mốc 32 qubit = trần lý thuyết, không phải mục tiêu chạy |
+Lưu ý: 1 qudit-4 = 2 qubit; **24 qudit = 48 qubit → không thể dùng statevector**.
+
+**Hướng A — Statevector exact (Born machine có điều kiện):** ψ(z) = U_L(θ, z)⋯U_1(θ, z)|0⟩ trên n qudit; cổng 1-qudit và 2-qudit tham số hóa, góc = hàm tuyến tính của z; P(k) = |ψ_k|² trên 4ⁿ ứng viên (= ứng viên của bài). Áp dụng cho ACC-8 (16 qubit) và ACC-12 (24 qubit, chỉ nghiên cứu).
+**Hướng B — Tensor network / MPS (Born machine có điều kiện):** ψ(s|z) = A₁[s₁](z)⋯Aₙ[sₙ](z), bond χ ∈ {4, 8, 16}; tensor lõi = ánh xạ hạng thấp từ z. Áp dụng ACC-8, ACC-12, ACC-24.
+- **Đính chính (2026-10-04, agent tự sửa phát biểu trong thảo luận trước):** với MPS χ > 1, **argmax |ψ(s)|² nói chung KHÔNG giải exact được bằng Viterbi** (biên độ là tổng theo đường bond, không phải max-product). Phần exact và rẻ của MPS là **lấy mẫu Born chính xác** O(n·d·χ²)/mẫu và tính xác suất biên. Vì vậy hướng B ra quyết định bằng **lấy mẫu K + verifier** (giống D1 §8.13) hoặc beam search; Viterbi exact chỉ đúng cho **factor graph dạng chuỗi** (log-tuyến tính), là arm đối chứng cổ điển.
+
+**Bài:** ACC-8 và ACC-12 = mở rộng ACC-1 (tô 4 màu, n đỉnh) và ACC-2 (clock spin 4 trạng thái, n site), giữ split OOD cùng triết lý (thưa→dày; họ cấu trúc chưa thấy). ACC-3 không mở rộng (đã ≈ ngẫu nhiên ở n=6).
+- Nhãn exact: ACC-8 vét cạn 65 536; ACC-12 vét cạn 16.7 triệu bằng C++ (không Python) hoặc solver exact; ACC-24 **không có nhãn tối ưu chứng minh được trong mọi trường hợp** → dùng best-known từ solver (CP-SAT / branch-and-bound), ghi rõ gap của solver.
+
+**Arm (cùng ngân sách tham số ±5% trong mỗi quy mô, cùng lưới lr/3 thử):** A-statevector, B-MPS(χ), đối chứng cổ điển: factor qudit (H5 mở rộng, orders 1–2) + giải mã (vét cạn nếu ≤ 8, max-product/beam nếu ≥ 12), MLP (H2), và ở ACC-24 thêm local search/simulated annealing có cùng ngân sách thời gian.
+
+**Metric khóa trước:** top-1 (ACC-8/12), regret so với tối ưu exact (ACC-8/12) hoặc best-known (ACC-24), pass@K + verifier (K=8), độ trễ quyết định p50/p99 bằng C++ (Python chỉ để huấn luyện), bộ nhớ đỉnh. 5 seed, CI95 bootstrap gộp, test OOD chấm 1 lần.
+**Tiêu chí đọc kết quả (không chọn trước hướng thắng):**
+- Một hướng được coi là **"có giá trị"** ở một quy mô khi CI95 gộp của nó (top-1 hoặc top1_V) nằm hoàn toàn trên CI95 của **mọi** đối chứng cổ điển ở ≥ 1 bài (ACC-1-mở rộng hoặc ACC-2-mở rộng), **và** độ trễ p99 ≤ 1 ms nếu quy mô thuộc vùng runtime (≤ 20 qubit).
+- ACC-24: nhãn `[KHÁM PHÁ]`, chỉ báo cáo regret và thời gian; **không** dùng để tuyên bố ủng hộ giả thuyết cho tới khi ACC-12 có kết quả.
+- Cả hai hướng thua đối chứng cổ điển → ghi `[CHỒNG CHẬP MÔ PHỎNG KHÔNG CHO LỢI THẾ BIỂU DIỄN — quy mô n]`.
+**Phản biện đã ghi nhận trước:** mô phỏng chồng chập trên máy cổ điển lưu tường minh 2ⁿ biên độ; không có tăng tốc tính toán so với vét cạn. Giá trị nếu có là **biểu diễn/khái quát**, và đó là thứ suite này đo.
+- Lịch sử: 2026-10-04 | Antigravity (Claude Opus 5.5) | §8.14 pre-register khung ACC-Q (A statevector, B MPS) + đính chính MPS argmax.
+
 
 
