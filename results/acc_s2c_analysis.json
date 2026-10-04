@@ -1,0 +1,279 @@
+{
+ "verdict": {
+  "tasks_evaluated": 3,
+  "final": true,
+  "C1_tasks_passed": 0,
+  "C2_tasks_passed": 2,
+  "H5_supported_P5_Q1": false,
+  "interaction_contributes": true
+ },
+ "per_task": {
+  "acc1": {
+   "top1_pooled": {
+    "H0_prior": 0.1016,
+    "H1_linear_rank64": 0.1724,
+    "H2_mlp_param_matched": 0.1944,
+    "H3_e9_core": 0.1684,
+    "H4_e9_no_rotor": 0.1572,
+    "H5_qudit_additive": 0.1252,
+    "H5_qudit_interact": 0.3668,
+    "H6_qubit_interact": 0.3304
+   },
+   "ci95_pooled": {
+    "H0_prior": [
+     0.09,
+     0.1136
+    ],
+    "H1_linear_rank64": [
+     0.1576,
+     0.1868
+    ],
+    "H2_mlp_param_matched": [
+     0.1792,
+     0.21
+    ],
+    "H3_e9_core": [
+     0.1544,
+     0.1832
+    ],
+    "H4_e9_no_rotor": [
+     0.1432,
+     0.17080999999999996
+    ],
+    "H5_qudit_additive": [
+     0.1128,
+     0.13800999999999997
+    ],
+    "H5_qudit_interact": [
+     0.348,
+     0.3856
+    ],
+    "H6_qubit_interact": [
+     0.3116,
+     0.3492
+    ]
+   },
+   "mask_violations": {
+    "H0_prior": 0,
+    "H1_linear_rank64": 0,
+    "H2_mlp_param_matched": 0,
+    "H3_e9_core": 0,
+    "H4_e9_no_rotor": 0,
+    "H5_qudit_additive": 0,
+    "H5_qudit_interact": 0,
+    "H6_qubit_interact": 0
+   },
+   "C1_beats": {
+    "H1_linear_rank64": true,
+    "H2_mlp_param_matched": true,
+    "H4_e9_no_rotor": true,
+    "H6_qubit_interact": false
+   },
+   "C1_pass": false,
+   "delta_interaction": {
+    "mean": 0.2416,
+    "ci95": [
+     0.2216,
+     0.2616
+    ],
+    "C2_pass": true
+   },
+   "delta_qudit_vs_qubit": {
+    "mean": 0.0364,
+    "ci95": [
+     0.0156,
+     0.0572
+    ]
+   },
+   "n_pooled": 2500,
+   "params": {
+    "H0_prior": 4096,
+    "H1_linear_rank64": 524288,
+    "H2_mlp_param_matched": 520255,
+    "H3_e9_core": 528392,
+    "H4_e9_no_rotor": 528384,
+    "H5_qudit_additive": 527384,
+    "H5_qudit_interact": 526064,
+    "H6_qubit_interact": 530432
+   }
+  },
+  "acc2": {
+   "top1_pooled": {
+    "H0_prior": 0.06,
+    "H1_linear_rank64": 0.2924,
+    "H2_mlp_param_matched": 0.2176,
+    "H3_e9_core": 0.2988,
+    "H4_e9_no_rotor": 0.3064,
+    "H5_qudit_additive": 0.0132,
+    "H5_qudit_interact": 0.4076,
+    "H6_qubit_interact": 0.416
+   },
+   "ci95_pooled": {
+    "H0_prior": [
+     0.0508,
+     0.0692
+    ],
+    "H1_linear_rank64": [
+     0.27438999999999997,
+     0.3108
+    ],
+    "H2_mlp_param_matched": [
+     0.2028,
+     0.2332
+    ],
+    "H3_e9_core": [
+     0.2804,
+     0.3164
+    ],
+    "H4_e9_no_rotor": [
+     0.2888,
+     0.3248
+    ],
+    "H5_qudit_additive": [
+     0.0088,
+     0.018
+    ],
+    "H5_qudit_interact": [
+     0.3884,
+     0.42680999999999997
+    ],
+    "H6_qubit_interact": [
+     0.3964,
+     0.4348
+    ]
+   },
+   "mask_violations": {
+    "H0_prior": 0,
+    "H1_linear_rank64": 0,
+    "H2_mlp_param_matched": 0,
+    "H3_e9_core": 0,
+    "H4_e9_no_rotor": 0,
+    "H5_qudit_additive": 0,
+    "H5_qudit_interact": 0,
+    "H6_qubit_interact": 0
+   },
+   "C1_beats": {
+    "H1_linear_rank64": true,
+    "H2_mlp_param_matched": true,
+    "H4_e9_no_rotor": true,
+    "H6_qubit_interact": false
+   },
+   "C1_pass": false,
+   "delta_interaction": {
+    "mean": 0.3944,
+    "ci95": [
+     0.37518999999999997,
+     0.4136
+    ],
+    "C2_pass": true
+   },
+   "delta_qudit_vs_qubit": {
+    "mean": -0.0084,
+    "ci95": [
+     -0.0252,
+     0.0084
+    ]
+   },
+   "n_pooled": 2500,
+   "params": {
+    "H0_prior": 4096,
+    "H1_linear_rank64": 524288,
+    "H2_mlp_param_matched": 520255,
+    "H3_e9_core": 528392,
+    "H4_e9_no_rotor": 528384,
+    "H5_qudit_additive": 527384,
+    "H5_qudit_interact": 526064,
+    "H6_qubit_interact": 530432
+   }
+  },
+  "acc3": {
+   "top1_pooled": {
+    "H0_prior": 0.0028,
+    "H1_linear_rank64": 0.0032,
+    "H2_mlp_param_matched": 0.0016,
+    "H3_e9_core": 0.0016,
+    "H4_e9_no_rotor": 0.0048,
+    "H5_qudit_additive": 0.0028,
+    "H5_qudit_interact": 0.0028,
+    "H6_qubit_interact": 0.0028
+   },
+   "ci95_pooled": {
+    "H0_prior": [
+     0.0012,
+     0.0048
+    ],
+    "H1_linear_rank64": [
+     0.0012,
+     0.0056
+    ],
+    "H2_mlp_param_matched": [
+     0.0004,
+     0.0032
+    ],
+    "H3_e9_core": [
+     0.0004,
+     0.0032
+    ],
+    "H4_e9_no_rotor": [
+     0.0024,
+     0.0076
+    ],
+    "H5_qudit_additive": [
+     0.0008,
+     0.004809999999999945
+    ],
+    "H5_qudit_interact": [
+     0.0008,
+     0.004809999999999945
+    ],
+    "H6_qubit_interact": [
+     0.0008,
+     0.0052
+    ]
+   },
+   "mask_violations": {
+    "H0_prior": 0,
+    "H1_linear_rank64": 0,
+    "H2_mlp_param_matched": 0,
+    "H3_e9_core": 0,
+    "H4_e9_no_rotor": 0,
+    "H5_qudit_additive": 0,
+    "H5_qudit_interact": 0,
+    "H6_qubit_interact": 0
+   },
+   "C1_beats": {
+    "H1_linear_rank64": false,
+    "H2_mlp_param_matched": false,
+    "H4_e9_no_rotor": false,
+    "H6_qubit_interact": false
+   },
+   "C1_pass": false,
+   "delta_interaction": {
+    "mean": 0.0,
+    "ci95": [
+     -0.0028,
+     0.0028
+    ],
+    "C2_pass": false
+   },
+   "delta_qudit_vs_qubit": {
+    "mean": 0.0,
+    "ci95": [
+     -0.0024,
+     0.0024
+    ]
+   },
+   "n_pooled": 2500,
+   "params": {
+    "H0_prior": 4096,
+    "H1_linear_rank64": 524288,
+    "H2_mlp_param_matched": 520255,
+    "H3_e9_core": 528392,
+    "H4_e9_no_rotor": 528384,
+    "H5_qudit_additive": 527384,
+    "H5_qudit_interact": 526064,
+    "H6_qubit_interact": 530432
+   }
+  }
+ }
+}

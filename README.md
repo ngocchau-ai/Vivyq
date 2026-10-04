@@ -32,6 +32,8 @@ Khác với các mô hình ngôn ngữ truyền thống bị giới hạn bởi 
 > 2. Độ trễ C++ Core p50 đạt **2.50 µs** (p99 đạt **3.30 µs**) được đo trên C-ABI DLL microbenchmark trong Sprint 3, chưa phải số đo trực tiếp từ harness Grand Prix E9.
 > 3. Hàm quyết định trong `collapse.cpp` (amplitude-squared argmax) và hàm quyết định trong E9 Python Scorer chưa đồng nhất, dự án đang kích hoạt sprint **E9-v2** để tái nghiệm thu đồng nhất C++ binary trước khi chính thức gắn nhãn Production-Verified. Xem [chương trình nghiên cứu và thực nghiệm](docs/RESEARCH_AND_DEVELOPMENT_PLAN.md) và [báo cáo Sprint 4](docs/SPRINT_4_GRAND_PRIX_E9_REPORT.md).
 
+> **[TRẠNG THÁI GIẢ THUYẾT — 2026-10-04] `[GIẢ THUYẾT QUDIT CHƯA ĐƯỢC ỦNG HỘ — P5/Q1]`** (hệ quả khóa trước của §8.12; kết quả ở [§8.15 ACCEPTANCE_SUITE](docs/ACCEPTANCE_SUITE_ACC1_3_QUDIT_HYPOTHESIS.md)). Trên test OOD, biểu diễn qudit-4 có tương tác (H5) vượt các đối chứng tuyến tính/MLP/E9 nhưng **không vượt** cùng cấu trúc trên qubit (H6). Lợi ích đo được đến từ tương tác bậc 2–3 (C2 đạt 2/3 bài), không phải từ qudit. Phạm vi: đặc trưng tổng hợp P5, chưa phải hidden-state thật.
+
 ---
 
 ## 2. CẤU TRÚC THƯ MỤC & BẢN ĐỒ TIẾN TRÌNH
@@ -90,6 +92,7 @@ D:\Vivyqu\ (liên kết D:\VivuQu)
 18. [Báo cáo Tổng kết & Nghiệm thu phát hành VivyQu Engine v1.0 (VIVYQU_V1_RELEASE_REPORT.md)](docs/VIVYQU_V1_RELEASE_REPORT.md)
 
 ## LỊCH SỬ THAY ĐỔI (CHANGELOG)
+- **2026-10-04 08:06 | Antigravity (Claude Opus 5.5):** Thêm khối trạng thái `[GIẢ THUYẾT QUDIT CHƯA ĐƯỢC ỦNG HỘ — P5/Q1]` theo hệ quả khóa trước §8.12 (S2c: C1 FAIL, C2 PASS 2/3). Không sửa nội dung cũ.
 - **2026-09-29 | MiMoCode / Full test + re-review:** Chạy host (239 pass / 4 fail→2 do API mới đã sửa expectation; 1 fail `vivyqu` import sẵn; 1 error race `_pytest_tmp`) và root (72 pass / 2–3 fail perf+SHM sẵn). Cập nhật tree map tiến độ. Re-review xác nhận CRITICAL 1–3 + backlog 4–8; còn fail: SHM seq lockstep, watchdog OPEN, SLA latency flake, `PYTHONPATH` cho `vivyqu`.
 - **2026-09-29 | MiMoCode / Full test + re-review:** Chạy host (239 pass / 4 fail→2 do API mới đã sửa expectation; 1 fail `vivyqu` import sẵn; 1 error race `_pytest_tmp`) và root (72 pass / 2–3 fail perf+SHM sẵn). Cập nhật tree map tiến độ. Re-review xác nhận CRITICAL 1–3 + backlog 4–8; còn fail: SHM seq lockstep, watchdog OPEN, SLA latency flake, `PYTHONPATH` cho `vivyqu`.
 - **2026-09-29 | MiMoCode / Backlog 4–8 (v1.2.0):** **(4)** Gộp version `1.2.0` (pyproject + `__init__` + `c_api`); CMake thêm `vivyqu_core` SHARED + `vivyqu_shm_daemon` + `bench_e9_latency` khớp `build_core.ps1`; build script copy DLL vào `python/vivyqu/`. **(5)** Gỡ hardcode `26.8 µs` + `[PRODUCTION-READY]` khỏi `knowledge.py`; host boot **không** auto-write knowledge (opt-in `CAUTREO_SYNC_KNOWLEDGE=1`). **(6)** Thêm `CautreoMemoryBackend` (evidence store, không phải cognition owner) để `tra`/`recall` chạy được; bỏ emit receipt kép; UI retry + sample boot không tự bịa ONLINE — gọi `host.link-probe`. **(7)** Đánh dấu `ui/desktop-studio` là `[SANDBOX]` (protocol REST+SSE riêng). **(8)** Lập [EVIDENCE_MANIFEST_G0_G7.md](docs/EVIDENCE_MANIFEST_G0_G7.md) theo audit 29/09.

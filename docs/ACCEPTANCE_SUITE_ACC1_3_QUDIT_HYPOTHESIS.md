@@ -121,6 +121,7 @@ Quy tắc: tham số của H2/H5/H6 phải khớp H3 ±5% (báo cáo số thực
 - 2026-10-04 | Antigravity (Claude Opus 5.5) | §8.13 pre-register S2d (H+V, lệch cấu trúc, seed 5–9); §8.14 khung ACC-Q (statevector / MPS, 8/12/24 qudit) + đính chính MPS argmax. Kèm ADR `ADR_2026-10-04_PIGGYBACK_HOST_CPP_RUNTIME.md`. Lý do: chủ dự án duyệt 06:40 và 06:51.
 - 2026-10-04 07:17 | Antigravity (Claude Opus 5.5) | §8.14: khối REPLACED, đính chính trần runtime statevector theo số đo K2 (bảng gốc giữ nguyên).
 - 2026-10-04 07:48 | Antigravity (Claude Opus 5.5) | §8.14.1 pre-register đối chứng `C-solver-beam` cùng ngân sách thời gian + tiêu chí "có giá trị" chặt hơn. Lý do: số đo K4 (beam B=64 đạt 99%/92% ở n=6); chủ dự án duyệt 07:47.
+- 2026-10-04 08:05 | Antigravity (Claude Opus 5.5) | §8.15 kết quả S2c: C1 FAIL (H5 không vượt H6), C2 PASS 2/3 → `[GIẢ THUYẾT QUDIT CHƯA ĐƯỢC ỦNG HỘ — P5/Q1]`. Lý do: S2c chạy xong, phân tích bằng script đã khóa trước.
 
 ## 8. REVISION #2 (2026-10-03) — theo quyết định chủ dự án
 
@@ -304,6 +305,40 @@ Lưu ý: 1 qudit-4 = 2 qubit; **24 qudit = 48 qubit → không thể dùng state
 
 **Phản biện ghi nhận:** khớp latency phụ thuộc chất lượng cài đặt C++ của từng arm. Arm A/B chưa tối ưu SIMD (§5 thiết kế) sẽ có p50 cao, khiến B* lớn hơn và solver mạnh hơn. Đây là bất lợi thật của hướng A/B ở runtime, không phải lỗi giao thức. Để tách bạch, báo cáo thêm so sánh **cùng B=64**.
 - Lịch sử: 2026-10-04 07:48 | Antigravity (Claude Opus 5.5) | Thêm §8.14.1 (đối chứng solver-beam cùng ngân sách thời gian), theo duyệt của chủ dự án 07:47.
+
+### 8.15 KẾT QUẢ S2c — H5/H6 theo tiêu chí §8.12 (2026-10-04 08:05) `[PROTOTYPE]` `[GIẢ THUYẾT QUDIT CHƯA ĐƯỢC ỦNG HỘ — P5/Q1]`
+**Nguồn:** `results/acc_s2c_{acc1,acc2,acc3}.json` (5 seed, test OOD chấm 1 lần/arm/seed), phân tích bằng script đã khóa trước `scripts/acc/analyze_s2c.py` (commit `0629c7b`) → `results/acc_s2c_analysis.json`. Không sửa script, không chạy lại.
+
+**Top-1 test OOD gộp (2500 mẫu), CI95 bootstrap:**
+| Arm | ACC-1 | ACC-2 | ACC-3 |
+|---|---|---|---|
+| H0_prior | 0.102 [0.090, 0.114] | 0.060 [0.051, 0.069] | 0.003 |
+| H1_linear_rank64 | 0.172 [0.158, 0.187] | 0.292 [0.274, 0.311] | 0.003 |
+| H2_mlp_param_matched | 0.194 [0.179, 0.210] | 0.218 [0.203, 0.233] | 0.002 |
+| H3_e9_core | 0.168 [0.154, 0.183] | 0.299 [0.280, 0.316] | 0.002 |
+| H4_e9_no_rotor | 0.157 [0.143, 0.171] | 0.306 [0.289, 0.325] | 0.005 |
+| H5_qudit_additive | 0.125 [0.113, 0.138] | 0.013 [0.009, 0.018] | 0.003 |
+| **H5_qudit_interact** | **0.367 [0.348, 0.386]** | **0.408 [0.388, 0.427]** | 0.003 |
+| **H6_qubit_interact** | **0.330 [0.312, 0.349]** | **0.416 [0.396, 0.435]** | 0.003 |
+
+Vi phạm mask: 0 ở mọi arm/bài. ACC-3 mọi arm ≈ ngẫu nhiên (1/4096 ≈ 0.0002 đến 0.005), đúng như rủi ro đã ghi trước.
+
+**Phán quyết theo tiêu chí khóa trước:**
+- **C1 — FAIL (0/3 bài).** H5_interact vượt hoàn toàn H1, H2, H4 ở ACC-1 và ACC-2 nhưng **không** vượt H6. ACC-1: CI H5 [0.348, 0.386] chạm CI H6 [0.312, 0.349] ở vùng 0.348–0.349. ACC-2: H6 cao hơn H5. → Theo hệ quả khóa trước: `[GIẢ THUYẾT QUDIT CHƯA ĐƯỢC ỦNG HỘ — P5/Q1]`.
+- **C2 — PASS (2/3 bài).** Δ_interaction ghép cặp: ACC-1 +0.242 [0.222, 0.262]; ACC-2 +0.394 [0.375, 0.414]; ACC-3 0.000 [−0.003, 0.003].
+- **C3 (báo cáo):** Δ_qudit = H5 − H6 ghép cặp: ACC-1 +0.036 [0.016, 0.057]; ACC-2 −0.008 [−0.025, 0.008]; ACC-3 0.000.
+
+**Diễn giải (tách bạch verified / inferred):**
+- *Verified:* cấu trúc **tương tác bậc 2–3 có cổng** (factor cặp/bộ ba) là thứ tạo ra bước nhảy: +0.17 (ACC-1) và +0.10 (ACC-2) so với arm cổ điển tốt nhất ngoài nhóm factor, cùng ngân sách tham số ±0.5%.
+- *Verified:* biểu diễn **qudit-4 so với qubit-2 không có lợi thế nhất quán**. Một bài nghiêng nhẹ về qudit (ACC-1, Δ ghép cặp có CI > 0 nhưng CI gộp chồng lấn nên không qua C1). Một bài hòa (ACC-2).
+- *Inferred:* lợi ích đến từ "tensor/tương tác" chứ không phải từ "qudit". Điều này khớp với việc C1 cố ý đưa H6 vào để tách hai yếu tố.
+- *Lưu ý phạm vi:* đây là P5 (đặc trưng tổng hợp), chưa phải hidden-state thật (S4). Theo §8.12, C1 fail thì không cần lặp lại C1 ở S4. Kết quả C2 vẫn đáng kiểm lại ở S4 nếu G-ENC đạt.
+
+**Hệ quả hành động (theo §8.12 và §8.2):**
+1. Gắn nhãn `[GIẢ THUYẾT QUDIT CHƯA ĐƯỢC ỦNG HỘ — P5/Q1]` vào README.
+2. Pha Q2 chỉ thiết kế biến thể **xuất phát từ chỗ thất bại**: S2d (§8.13, đã pre-register) kiểm "lệch cấu trúc" (H5_misaligned) và "H6 bậc 4". Đây đúng là câu hỏi còn mở: lợi thế có phụ thuộc việc ghép site khớp cấu trúc bài hay không.
+3. ACC-Q (§8.14/§8.14.1) đo một câu hỏi khác (mô phỏng chồng chập); kết quả S2c không chặn nó, nhưng đặt kỳ vọng thấp cho lợi thế "qudit thuần".
+- Lịch sử: 2026-10-04 08:05 | Antigravity (Claude Opus 5.5) | Thêm §8.15 kết quả S2c (C1 FAIL, C2 PASS 2/3), phân tích bằng script khóa trước.
 
 
 
