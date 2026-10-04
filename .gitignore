@@ -24,3 +24,7 @@ Thumbs.db
 # Large benchmark data (GitHub 100MB limit; checksums stay in repo)
 data/e0_benchmark/*.npy
 *.npy.tmp
+
+# ACC-Q build artifacts
+build/bin/libvivyqu_accq.a
+build/bin/vivyqu_accq.dll
