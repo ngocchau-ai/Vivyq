@@ -66,6 +66,11 @@
    - Căn cứ: beam B=64 trên năng lượng exact đạt tối ưu 99% (ACC-1) / 92% (ACC-2) ở n=6 trong ~0.03 ms.
    - Quy tắc: mọi arm học (statevector, MPS, factor, MLP) so với `C-solver-beam(B*)` có p50 C++ ≤ p50 của arm. Ô nào solver đạt ≥ 0.99 thì không được dùng để ủng hộ giả thuyết.
    - Hệ quả: vùng còn khả năng = n lớn dày (12/24) hoặc bài mà năng lượng không quan sát được (cần pre-register riêng).
+
+11. **[2026-10-04] Kết quả S2c: `[GIẢ THUYẾT QUDIT CHƯA ĐƯỢC ỦNG HỘ — P5/Q1]`** (spec §8.15, commit 0cc8eb1; tiêu chí khóa trước §8.12):
+   - C1 FAIL 0/3: H5_qudit_interact vượt H1/H2/H4 nhưng không vượt H6_qubit_interact (ACC-1 0.367 vs 0.330, CI chạm; ACC-2 0.408 vs 0.416).
+   - C2 PASS 2/3: tương tác bậc 2–3 đóng góp +0.24 (ACC-1), +0.39 (ACC-2). ACC-3 mọi arm ≈ ngẫu nhiên.
+   - Quy tắc kế thừa: không được viết "qudit cho lợi thế" trong tài liệu nào; chỉ được nói "cấu trúc tương tác có cổng giúp". Pha Q2 chỉ thiết kế biến thể từ chỗ thất bại (S2d §8.13).
 ---
 
 ## 2. LỊCH SỬ THAY ĐỔI (AUDIT TRAIL)
@@ -78,3 +83,4 @@
 | 2026-10-04 06:00 | Antigravity IDE (Claude Opus 5.5) | Bổ sung Quyết định 8: cô lập rotor (bằng chứng ACC-1..3 §8.10, thực thi §8.11). |
 | 2026-10-04 07:03 | Antigravity IDE (Claude Opus 5.5) | Bổ sung Quyết định 9: runtime C/C++ + Piggyback Host (ADR 2026-10-04, M1/M2 đạt). |
 | 2026-10-04 07:49 | Antigravity IDE (Claude Opus 5.5) | Bổ sung Quyết định 10: đối chứng solver-beam cùng ngân sách thời gian cho ACC-Q (spec §8.14.1). |
+| 2026-10-04 08:06 | Antigravity IDE (Claude Opus 5.5) | Bổ sung Quyết định 11: kết quả S2c (C1 FAIL, C2 PASS 2/3). |
