@@ -1,4 +1,4 @@
-﻿# [!IMPORTANT]
+# [!IMPORTANT]
 > **QUY ƯỚC BẮT BUỘC DÀNH CHO AGENT KẾ THỪA & CHỈNH SỬA TÀI LIỆU:**
 > 1. **Ghi chú bắt buộc (Changelog):** Bất kỳ agent nào chỉnh sửa tài liệu này PHẢI bổ sung ghi chú tại mục Lịch Sử Thay Đổi (Tên/ID Agent, thời gian, lý do thay đổi).
 > 2. **Chỉ cô lập, KHÔNG xóa bỏ:** TUYỆT ĐỐI KHÔNG xóa bỏ các nội dung/kiến trúc cũ. Toàn bộ nội dung muốn thay đổi phải được đóng khung cô lập và đánh dấu `[ISOLATED / DEPRECATED / REPLACED]`.
@@ -55,6 +55,12 @@
    - Căn cứ: bộ nghiệm thu ACC-1..3 (`docs/ACCEPTANCE_SUITE_ACC1_3_QUDIT_HYPOTHESIS.md` §8.10): H3 (có rotor) không thắng H4 (bỏ rotor) ở cả 3 bài.
    - Thực thi (§8.11): gập rotor vào `W_c_active = W_c·R(θ)`; mặc định `ROTOR_MODE_ISOLATED`; đường cũ giữ qua `ROTOR_MODE_LEGACY`. Quyết định tương đương 100% (300 mẫu), p50 20.9 → 17.8 µs.
    - Ảnh hưởng tới Quyết định 1 và 7: rotor không còn là bước runtime; Hamiltonian Torque Descent vẫn chạy nhưng ở ISOLATED tốn p50 274 µs/bước (LEGACY 31.6 µs). Quyết định 1 và 7 **không bị xóa**, chỉ được chú thích bởi Quyết định 8.
+
+9. **[2026-10-04] Runtime C/C++ thuần + Piggyback Host in-process** (chủ dự án duyệt 06:51; ADR `docs/ADR_2026-10-04_PIGGYBACK_HOST_CPP_RUNTIME.md`):
+   - Đường quyết định lúc chạy = C/C++ + C-ABI, không phụ thuộc Python; Python chỉ cho nghiên cứu/huấn luyện/harness.
+   - Một tiến trình: libllama (llama.cpp 836d571) + cb_eval bắt `l_out-L` token cuối + `vivyqu_core_step_e9`; P2 runtime = Hadamard ngẫu nhiên có đệm 2560->4096 (thay ma trận dày 42-84 MB).
+   - Đo (commit 00a400b): quyết định cận biên p50 ~110 µs, p99 ~190 µs (2 lượt); bắt hidden-state làm chậm sinh token 0.58-2.08%. Chất lượng CHƯA đo (trọng số E9 chưa train trên hidden-state).
+   - Bắt buộc trước S4: `hidden_pipeline.py` đổi sang cùng P2 Hadamard. Rủi ro mở: lệch phiên bản llama.cpp với Vivy (a94d563); host cần ưu tiên CPU (smoke tranh CPU làm token chậm ~9 lần).
 ---
 
 ## 2. LỊCH SỬ THAY ĐỔI (AUDIT TRAIL)
@@ -65,3 +71,4 @@
 | 2026-09-27 18:30 | Antigravity IDE | Cập nhật Quyết định 1: Khóa Nhánh C E9-v2 sau khi tích hợp trọn gói vào C++ Core và đối chiếu chéo 100% trên 1500 mẫu test. |
 | 2026-09-27 19:15 | Antigravity IDE | Bổ sung Quyết định 6 (SHM Daemon E9 Mode) và Quyết định 7 (Hamiltonian Torque Descent thích nghi trực tuyến p50 = 48.60 µs). |
 | 2026-10-04 06:00 | Antigravity IDE (Claude Opus 5.5) | Bổ sung Quyết định 8: cô lập rotor (bằng chứng ACC-1..3 §8.10, thực thi §8.11). |
+| 2026-10-04 07:03 | Antigravity IDE (Claude Opus 5.5) | Bổ sung Quyết định 9: runtime C/C++ + Piggyback Host (ADR 2026-10-04, M1/M2 đạt). |
