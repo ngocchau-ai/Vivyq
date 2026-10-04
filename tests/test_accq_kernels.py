@@ -264,3 +264,127 @@ def test_k2_set_get_roundtrip_topk_ties_and_errors(lib):
     sv.close()
     h = _P()
     assert lib.accq_sv_create(13, ctypes.byref(h)) == 2 and lib.accq_sv_create(0, ctypes.byref(h)) == 2
+
+
+# ---------------- K3: MPS (Changelog 2026-10-04 07:21 | Antigravity (Claude Opus 5.5) | thêm cổng K3) ----------------
+_I32 = ctypes.POINTER(ctypes.c_int32)
+_U64 = ctypes.POINTER(ctypes.c_uint64)
+
+
+def _mps_lib(lib):
+    if getattr(lib, "_mps_ready", False):
+        return lib
+    lib.accq_mps_amplitude.argtypes = [ctypes.c_int32, _I32, _D, ctypes.c_uint64, _D]
+    lib.accq_mps_norm2.argtypes = [ctypes.c_int32, _I32, _D, _D]
+    lib.accq_mps_sample.argtypes = [ctypes.c_int32, _I32, _D, ctypes.c_int32, ctypes.c_uint64, _U64, _D]
+    for f in (lib.accq_mps_amplitude, lib.accq_mps_norm2, lib.accq_mps_sample):
+        f.restype = ctypes.c_int32
+    lib.accq_version.restype = ctypes.c_char_p
+    lib._mps_ready = True
+    return lib
+
+
+def _rand_mps(rng, n, chi):
+    bonds = [1] + [min(chi, 4 ** min(i, n - i)) for i in range(1, n)] + [1]
+    As = [rng.standard_normal((bonds[i], 4, bonds[i + 1])) + 1j * rng.standard_normal((bonds[i], 4, bonds[i + 1]))
+          for i in range(n)]
+    return np.array(bonds, np.int32), As
+
+
+def _pack(As):
+    return _reim(np.concatenate([A.ravel() for A in As]))
+
+
+def _dense(As):
+    M = As[0][0]  # (4, D1); hàng = index các site đã duyệt (s_0 bit thấp)
+    for A in As[1:]:
+        C = M.shape[0]
+        M = np.einsum("cl,lar->acr", M, A).reshape(4 * C, A.shape[2])
+    return M[:, 0]
+
+
+def _mps_call_norm(lib, bonds, t):
+    out = ctypes.c_double()
+    rc = lib.accq_mps_norm2(len(bonds) - 1, bonds.ctypes.data_as(_I32), t.ctypes.data_as(_D), ctypes.byref(out))
+    return rc, out.value
+
+
+def _mps_sample(lib, bonds, t, K, seed):
+    idx = np.empty(max(K, 1), np.uint64)
+    lp = np.empty(max(K, 1))
+    rc = lib.accq_mps_sample(len(bonds) - 1, bonds.ctypes.data_as(_I32), t.ctypes.data_as(_D), K, seed,
+                             idx.ctypes.data_as(_U64), lp.ctypes.data_as(_D))
+    return rc, idx, lp
+
+
+@pytest.mark.parametrize("n,chi", [(1, 1), (3, 2), (5, 4), (6, 8)])
+def test_k3_amplitude_and_norm_match_dense(lib, n, chi):
+    L = _mps_lib(lib)
+    assert L.accq_version().decode().startswith("vivyqu_accq 0.3.0")
+    rng = np.random.default_rng(100 + n)
+    bonds, As = _rand_mps(rng, n, chi)
+    t = _pack(As)
+    psi = _dense(As)
+    out = np.empty(2)
+    got = np.empty(4 ** n, complex)
+    for k in range(4 ** n):
+        assert L.accq_mps_amplitude(n, bonds.ctypes.data_as(_I32), t.ctypes.data_as(_D), k, out.ctypes.data_as(_D)) == 0
+        got[k] = out[0] + 1j * out[1]
+    scale = np.abs(psi).max()
+    assert np.abs(got - psi).max() <= 1e-12 * scale
+    rc, nrm = _mps_call_norm(L, bonds, t)
+    ref = float(np.sum(np.abs(psi) ** 2))
+    assert rc == 0 and abs(nrm - ref) <= 1e-12 * ref
+
+
+def test_k3_sampling_tv_logp_determinism(lib):
+    L = _mps_lib(lib)
+    rng = np.random.default_rng(7)
+    bonds, As = _rand_mps(rng, 4, 4)
+    t = _pack(As)
+    p = np.abs(_dense(As)) ** 2
+    p /= p.sum()
+    N = 1_000_000
+    rc, idx, lp = _mps_sample(L, bonds, t, N, 12345)
+    assert rc == 0
+    emp = np.bincount(idx.astype(np.int64), minlength=256) / N
+    tv = 0.5 * np.abs(emp - p).sum()
+    assert tv < 0.01, tv
+    assert np.abs(lp - np.log(p[idx.astype(np.int64)])).max() <= 1e-10
+    rc2, idx2, lp2 = _mps_sample(L, bonds, t, 1000, 12345)
+    assert rc2 == 0 and np.array_equal(idx2, idx[:1000]) and np.array_equal(lp2, lp[:1000])
+    _, idx3, _ = _mps_sample(L, bonds, t, 1000, 999)
+    assert not np.array_equal(idx3, idx2)
+
+
+def test_k3_n24_large_scale_stays_finite(lib):
+    L = _mps_lib(lib)
+    rng = np.random.default_rng(24)
+    bonds, As = _rand_mps(rng, 24, 16)
+    t = _pack([A * 30.0 for A in As])  # biên độ khổng lồ: kernel phải chuẩn hóa log-scale, logp vẫn hữu hạn
+    rc, idx, lp = _mps_sample(L, bonds, t, 8, 1)
+    assert rc == 0 and np.all(np.isfinite(lp)) and np.all(lp <= 0)
+    assert np.all(idx < np.uint64(4 ** 24))
+
+
+def test_k3_errors(lib):
+    L = _mps_lib(lib)
+    rng = np.random.default_rng(3)
+    bonds, As = _rand_mps(rng, 3, 2)
+    t = _pack(As)
+    out = np.empty(2)
+    B = lambda b: np.array(b, np.int32)  # noqa: E731
+    assert L.accq_mps_amplitude(3, B([2, 2, 2, 1]).ctypes.data_as(_I32), t.ctypes.data_as(_D), 0,
+                                out.ctypes.data_as(_D)) == 1  # bonds[0] != 1
+    assert L.accq_mps_amplitude(3, bonds.ctypes.data_as(_I32), t.ctypes.data_as(_D), 64,
+                                out.ctypes.data_as(_D)) == 1  # idx >= 4^n
+    assert L.accq_mps_amplitude(3, bonds.ctypes.data_as(_I32), t.ctypes.data_as(_D), 0, None) == 1
+    assert _mps_call_norm(L, B([1]), t)[0] == 2                    # n = 0
+    assert _mps_call_norm(L, B([1] * 33), t)[0] == 2               # n = 32
+    assert _mps_call_norm(L, B([1, 65, 1]), np.zeros(2 * 65 * 8))[0] == 2  # bond > 64
+    bad = t.copy()
+    bad[3] = np.nan
+    assert _mps_call_norm(L, bonds, bad)[0] == 3
+    assert _mps_call_norm(L, bonds, np.zeros_like(t))[0] == 3      # chuẩn = 0
+    assert _mps_sample(L, bonds, np.zeros_like(t), 4, 0)[0] == 3
+    assert _mps_sample(L, bonds, t, 0, 0)[0] == 1

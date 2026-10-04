@@ -26,6 +26,8 @@ Cung cấp các kernel **suy luận/giải mã/sinh nhãn** bằng C++ để: (a
 | **K3** | MPS Born machine (hướng B) | `accq_mps_*`: biên độ ψ(s), chuẩn hóa, **lấy mẫu Born chính xác** (tuần tự có điều kiện với môi trường phải), log P(s) | Biên độ khớp contraction dày n ≤ 6 tới 1e-12; tổng P = 1 ± 1e-12; phân phối mẫu: khoảng cách TV < 0.01 với 200 000 mẫu (n = 4, χ = 4) | Lấy K = 8 mẫu ở n = 24, χ ∈ {8, 16} |
 | **K4** | Giải mã factor (đối chứng cổ điển) | `accq_chain_viterbi` (exact cho tương tác chuỗi i–i+1), `accq_pairwise_beam` (beam B, tổng quát) | Viterbi = K1 trên 100% instance chuỗi n ≤ 8; beam: chỉ báo cáo tỷ lệ đạt tối ưu so với K1 (không phải cổng) | n = 12, 24 |
 
+> **[REPLACED 2026-10-04 07:20] Cổng lấy mẫu K3 "TV < 0.01 với 200 000 mẫu"** → **1 000 000 mẫu**. Lý do: với 4⁴ = 256 kết cục, TV kỳ vọng do nhiễu lấy mẫu ≈ ½·√(2/π)·Σ√(p/N); phân phối gần đều cho ≈ 0.014 ở N = 2·10⁵ (cổng sẽ trượt dù kernel đúng), ≈ 0.0064 ở N = 10⁶. Ngưỡng 0.01 giữ nguyên. Thêm cổng logp: logp mẫu = log(\|ψ\|²/chuẩn) tới 1e-10.
+
 Kiểm thử: `tests/test_accq_kernels.py` (pytest + ctypes, tham chiếu NumPy/`scripts/acc`), thêm kiểm tham số sai (null, n ngoài phạm vi, NaN) phải trả đúng mã lỗi.
 
 ## 4. Rủi ro (Devil's Advocate)
@@ -43,6 +45,13 @@ Kiểm thử: `tests/test_accq_kernels.py` (pytest + ctypes, tham chiếu NumPy/
 | K2 | **PASS** | 3/3 test K2: khớp tensordot NumPy n=3,4 tới 1e-12 sau 3 lớp cổng unita ngẫu nhiên (kể cả cặp site đảo thứ tự), chuẩn = 1 ± 1e-12, top-K có mask khớp lexsort, set/get, hòa, mã lỗi | Mỗi lớp: n=6: 0.29 ms · n=8: 7.1 ms · n=10: 198 ms. Bản đầu (duyệt cả N chỉ số + `__muldc3`): n=8: 30.8 ms, n=10: 429 ms |
 - Bài học K2: cờ `-fcx-limited-range` bỏ `__muldc3` (an toàn vì kernel từ chối đầu vào không hữu hạn); duyệt cơ sở bằng chèn 2 bit 0 thay vì quét cả N.
 
+| Kernel | Cổng | Bằng chứng | Hiệu năng (CPU có tiến trình nền) |
+|---|---|---|---|
+| K3 | **PASS** | 7/7 test K3: biên độ mọi index khớp contraction dày (einsum) n=1,3,5,6 (χ tới 8) tới 1e-12·max\|ψ\|; chuẩn khớp Σ\|ψ\|² tới 1e-12 tương đối; 1 000 000 mẫu n=4 χ=4: **TV = 0.0054** (nhiễu kỳ vọng 0.0056; đối chứng 200 000 mẫu cho TV = 0.0138 → xác nhận lý do REPLACED cổng); logp khớp log P tới 1e-10; cùng seed → cùng mẫu, khác seed → khác; n=24 χ=16 với biên độ ×30 vẫn hữu hạn (log-scale); mã lỗi 1/2/3 | n=24, K=8 mẫu (gồm tính môi trường phải mỗi lần gọi): χ=8: p50 0.24 ms / p99 2.3 ms · χ=16: p50 0.93 ms / p99 4.8 ms (p99 cao do S2c + trích xuất chạy nền) |
+- Ghi chú K3: môi trường phải đang tính lại mỗi lần gọi; nếu cần, tách API cache môi trường (chỉ làm khi bench thực tế đòi hỏi — YAGNI).
+
 ## Lịch sử thay đổi
 - 2026-10-04 07:12 | Antigravity (Claude Opus 5.5) | Tạo mới thiết kế kernel K1–K4 + cổng kiểm chứng, theo duyệt bước 3.
 - 2026-10-04 07:17 | Antigravity (Claude Opus 5.5) | §5 kết quả K1, K2 (PASS) + số đo; đính chính trần runtime statevector ghi ở spec §8.14 (REPLACED).
+- 2026-10-04 07:20 | Antigravity (Claude Opus 5.5) | Cổng sampling K3: 200 000 → 1 000 000 mẫu (REPLACED, lý do nhiễu thống kê), thêm cổng logp.
+- 2026-10-04 07:22 | Antigravity (Claude Opus 5.5) | §5 kết quả K3 (PASS) + số đo n=24.

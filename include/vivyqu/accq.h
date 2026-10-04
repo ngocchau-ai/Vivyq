@@ -56,4 +56,18 @@ ACCQ_API int32_t accq_sv_probs(const AccqSV* sv, double* probs, uint64_t len);  
 ACCQ_API int32_t accq_sv_topk(const AccqSV* sv, const uint8_t* mask, int32_t k, uint64_t* idx, double* prob,
                               int32_t* k_out);
 
+// ---------------- K3: MPS Born machine (hướng B) ----------------
+// bonds: mảng n+1 phần tử, bonds[0] = bonds[n] = 1, 1 <= bonds[i] <= ACCQ_MPS_MAX_BOND.
+// tensors: nối tiếp các site; site i có bonds[i]*4*bonds[i+1] số phức (re, im), chỉ số [l][a][r] -> (l*4 + a)*Dr + r.
+// psi(s) = A_0[s_0] A_1[s_1] ... A_{n-1}[s_{n-1}] (tích ma trận Dl x Dr). Index ứng viên = sum s_i 4^i (n <= 31).
+constexpr int32_t ACCQ_MPS_MAX_SITES = 31;
+constexpr int32_t ACCQ_MPS_MAX_BOND = 64;
+ACCQ_API int32_t accq_mps_amplitude(int32_t n, const int32_t* bonds, const double* tensors_reim, uint64_t idx,
+                                    double* out_reim2);
+ACCQ_API int32_t accq_mps_norm2(int32_t n, const int32_t* bonds, const double* tensors_reim, double* out);
+// Lấy K mẫu Born chính xác (tuần tự có điều kiện, môi trường phải). seed xác định -> kết quả tái lập.
+// idx_out[K], logp_out[K] (log xác suất chuẩn hóa của mẫu). Trả ACCQ_ERR_NONFINITE nếu chuẩn = 0/không hữu hạn.
+ACCQ_API int32_t accq_mps_sample(int32_t n, const int32_t* bonds, const double* tensors_reim, int32_t K,
+                                 uint64_t seed, uint64_t* idx_out, double* logp_out);
+
 ACCQ_API const char* accq_version();
