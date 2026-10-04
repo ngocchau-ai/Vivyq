@@ -70,4 +70,14 @@ ACCQ_API int32_t accq_mps_norm2(int32_t n, const int32_t* bonds, const double* t
 ACCQ_API int32_t accq_mps_sample(int32_t n, const int32_t* bonds, const double* tensors_reim, int32_t K,
                                  uint64_t seed, uint64_t* idx_out, double* logp_out);
 
+// ---------------- K4: giải mã factor cổ điển (đối chứng) ----------------
+// Chuỗi: E = sum_i unary[i*4+s_i] + sum_{i<n-1} chain[i*16 + s_i*4 + s_{i+1}]. Exact. Hòa -> index nhỏ nhất (theo số học DP).
+constexpr int32_t ACCQ_K4_MAX_SITES = 31;
+constexpr int32_t ACCQ_BEAM_MAX = 65536;
+ACCQ_API int32_t accq_chain_viterbi(int32_t n, const double* unary, const double* chain, const uint8_t* forbid,
+                                    uint64_t* best_idx, double* best_E);
+// Beam tổng quát trên năng lượng cặp (bố cục unary/pair/forbid như K1). Heuristic, không đảm bảo tối ưu.
+ACCQ_API int32_t accq_pairwise_beam(int32_t n, const double* unary, const double* pair, const uint8_t* forbid,
+                                    int32_t beam, uint64_t* best_idx, double* best_E);
+
 ACCQ_API const char* accq_version();

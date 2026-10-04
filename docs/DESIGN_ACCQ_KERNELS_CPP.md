@@ -57,8 +57,24 @@ Kiểm thử: `tests/test_accq_kernels.py` (pytest + ctypes, tham chiếu NumPy/
 | K3 | **PASS** | 7/7 test K3: biên độ mọi index khớp contraction dày (einsum) n=1,3,5,6 (χ tới 8) tới 1e-12·max\|ψ\|; chuẩn khớp Σ\|ψ\|² tới 1e-12 tương đối; 1 000 000 mẫu n=4 χ=4: **TV = 0.0054** (nhiễu kỳ vọng 0.0056; đối chứng 200 000 mẫu cho TV = 0.0138 → xác nhận lý do REPLACED cổng); logp khớp log P tới 1e-10; cùng seed → cùng mẫu, khác seed → khác; n=24 χ=16 với biên độ ×30 vẫn hữu hạn (log-scale); mã lỗi 1/2/3 | n=24, K=8 mẫu (gồm tính môi trường phải mỗi lần gọi): χ=8: p50 0.24 ms / p99 2.3 ms · χ=16: p50 0.93 ms / p99 4.8 ms (p99 cao do S2c + trích xuất chạy nền) |
 - Ghi chú K3: môi trường phải đang tính lại mỗi lần gọi; nếu cần, tách API cache môi trường (chỉ làm khi bench thực tế đòi hỏi — YAGNI).
 
+| Kernel | Cổng | Bằng chứng | Hiệu năng (CPU có tiến trình nền, gồm overhead ctypes) |
+|---|---|---|---|
+| K4 | **PASS** | 4/4 test K4: Viterbi = K1 trên 300 instance chuỗi n=2..8 (½ có forbid), \|ΔE\| ≤ 1e-9, index trùng khi ground duy nhất (≥ 250 instance); năng lượng nguyên 200 instance (≥ 100 có nhiều ground) → (rc, index, E) trùng K1 tuyệt đối (tie-break index nhỏ nhất); beam B = 4^(n−1) = K1 trên 60 instance; mã lỗi 1/2/3/5 | Viterbi n=12/24: p50 0.011 ms. Beam n=12: B=64 0.033 ms, B=256 0.11 ms; n=24: B=64 0.12 ms, B=256 0.62 ms |
+
+**Báo cáo (không phải cổng) — tỷ lệ beam đạt tối ưu toàn cục so với K1:**
+
+| Tập | B = 8 | B = 64 | B = 1024 |
+|---|---|---|---|
+| ACC-1 n=6 (500 instance, có forbid) | 0.886 | 0.990 | — |
+| ACC-2 n=6 (500 instance) | 0.562 | 0.918 | — |
+| Dày ngẫu nhiên n=12 (20 instance) | 0.10 | 0.25 | 1.00 |
+
+> [!WARNING]
+> **Hệ quả cho ACC-Q / giả thuyết qudit:** khi đã biết hàm năng lượng, một beam cổ điển B = 64 đạt 99% (ACC-1) / 92% (ACC-2) ở n = 6 trong ~0.03 ms. Vì vậy các nhánh A/B của ACC-Q **phải được so với beam cùng ngân sách thời gian** (không chỉ so với prior/ngẫu nhiên). Khác biệt còn lại của hướng qudit chỉ có thể nằm ở bài toán mà năng lượng **chưa biết / phải học từ dữ liệu**, hoặc n lớn dày (n=12: B=64 chỉ 25%). Điều này phải được đưa vào tiêu chí pre-register ACC-Q trước khi chạy. `[CHƯA KIỂM CHỨNG]` ở n = 24 (không có đáp án exact).
+
 ## Lịch sử thay đổi
 - 2026-10-04 07:12 | Antigravity (Claude Opus 5.5) | Tạo mới thiết kế kernel K1–K4 + cổng kiểm chứng, theo duyệt bước 3.
 - 2026-10-04 07:17 | Antigravity (Claude Opus 5.5) | §5 kết quả K1, K2 (PASS) + số đo; đính chính trần runtime statevector ghi ở spec §8.14 (REPLACED).
 - 2026-10-04 07:20 | Antigravity (Claude Opus 5.5) | Cổng sampling K3: 200 000 → 1 000 000 mẫu (REPLACED, lý do nhiễu thống kê), thêm cổng logp.
 - 2026-10-04 07:22 | Antigravity (Claude Opus 5.5) | §5 kết quả K3 (PASS) + số đo n=24.
+- 2026-10-04 07:26 | Antigravity (Claude Opus 5.5) | §5 kết quả K4 (PASS), báo cáo tỷ lệ beam, cảnh báo baseline cổ điển mạnh cho ACC-Q. K1–K4 hoàn tất cổng.

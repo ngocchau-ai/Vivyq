@@ -54,7 +54,7 @@ bool finite_all(const double* p, size_t m) {
 
 }  // namespace
 
-ACCQ_API const char* accq_version() { return "vivyqu_accq 0.3.0 (K1-K3)"; }
+ACCQ_API const char* accq_version() { return "vivyqu_accq 0.4.0 (K1-K4)"; }
 
 ACCQ_API int32_t accq_pairwise_bruteforce(int32_t n, const double* unary, const double* pair, const uint8_t* forbid,
                                           double tol, uint64_t* best_idx, double* best_E, uint64_t* n_ground,

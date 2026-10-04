@@ -320,7 +320,7 @@ def _mps_sample(lib, bonds, t, K, seed):
 @pytest.mark.parametrize("n,chi", [(1, 1), (3, 2), (5, 4), (6, 8)])
 def test_k3_amplitude_and_norm_match_dense(lib, n, chi):
     L = _mps_lib(lib)
-    assert L.accq_version().decode().startswith("vivyqu_accq 0.3.0")
+    assert L.accq_version().decode().startswith("vivyqu_accq 0.4.0")
     rng = np.random.default_rng(100 + n)
     bonds, As = _rand_mps(rng, n, chi)
     t = _pack(As)
@@ -388,3 +388,124 @@ def test_k3_errors(lib):
     assert _mps_call_norm(L, bonds, np.zeros_like(t))[0] == 3      # chuẩn = 0
     assert _mps_sample(L, bonds, np.zeros_like(t), 4, 0)[0] == 3
     assert _mps_sample(L, bonds, t, 0, 0)[0] == 1
+
+
+# ---------------- K4 (Changelog 2026-10-04 07:24 | Antigravity (Claude Opus 5.5) | thêm cổng K4) ----------------
+_U8 = ctypes.POINTER(ctypes.c_uint8)
+
+
+def _k4_lib(lib):
+    if getattr(lib, "_k4_ready", False):
+        return lib
+    lib.accq_chain_viterbi.argtypes = [ctypes.c_int32, _D, _D, _U8, _U64, _D]
+    lib.accq_pairwise_beam.argtypes = [ctypes.c_int32, _D, _D, _U8, ctypes.c_int32, _U64, _D]
+    lib.accq_chain_viterbi.restype = lib.accq_pairwise_beam.restype = ctypes.c_int32
+    lib._k4_ready = True
+    return lib
+
+
+def _fp(f):
+    return None if f is None else np.ascontiguousarray(f, np.uint8).ctypes.data_as(_U8)
+
+
+def viterbi(lib, u, chain, f=None):
+    u, chain = np.ascontiguousarray(u, np.float64), np.ascontiguousarray(chain, np.float64)
+    fa = None if f is None else np.ascontiguousarray(f, np.uint8)
+    bi, be = ctypes.c_uint64(), ctypes.c_double()
+    rc = lib.accq_chain_viterbi(u.shape[0], u.ctypes.data_as(_D), chain.ctypes.data_as(_D), _fp(fa),
+                                ctypes.byref(bi), ctypes.byref(be))
+    return rc, bi.value, be.value
+
+
+def beam(lib, u, p, B, f=None):
+    u, p = np.ascontiguousarray(u, np.float64), np.ascontiguousarray(p, np.float64)
+    fa = None if f is None else np.ascontiguousarray(f, np.uint8)
+    bi, be = ctypes.c_uint64(), ctypes.c_double()
+    rc = lib.accq_pairwise_beam(u.shape[0], u.ctypes.data_as(_D), p.ctypes.data_as(_D), _fp(fa), B,
+                                ctypes.byref(bi), ctypes.byref(be))
+    return rc, bi.value, be.value
+
+
+def _chain_to_pair(chain, n):
+    p = np.zeros((n, n, 4, 4))
+    for i in range(n - 1):
+        p[i, i + 1] = chain[i]
+    return p
+
+
+def _rand_forbid(rng, n, prob):
+    f = (rng.random((n, 4)) < prob).astype(np.uint8)
+    f[f.sum(1) == 4, rng.integers(0, 4)] = 0  # không để site chết
+    return f
+
+
+def test_k4_viterbi_matches_k1_on_300_chain_instances(lib):
+    L = _k4_lib(lib)
+    rng = np.random.default_rng(41)
+    unique = 0
+    for t in range(300):
+        n = 2 + t % 7
+        u = rng.standard_normal((n, 4))
+        ch = rng.standard_normal((n - 1, 4, 4))
+        f = _rand_forbid(rng, n, 0.15) if t % 2 else None
+        rc, bi, be = viterbi(L, u, ch, f)
+        rc1, bi1, be1, ng, e = k1(lib, u, _chain_to_pair(ch, n), f)
+        assert rc == 0 and rc1 == 0
+        assert abs(be - be1) <= 1e-9 and e[bi] <= be1 + 1e-9
+        if ng == 1:
+            assert bi == bi1
+            unique += 1
+    assert unique >= 250  # đảm bảo phần lớn instance thực sự kiểm tra so khớp index
+
+
+def test_k4_viterbi_integer_ties_exact_smallest_index(lib):
+    # năng lượng nguyên -> cộng chính xác, nhiều ground state -> index phải trùng K1 (nhỏ nhất) tuyệt đối
+    L = _k4_lib(lib)
+    rng = np.random.default_rng(42)
+    multi = 0
+    for t in range(200):
+        n = 2 + t % 7
+        u = rng.integers(-1, 2, (n, 4)).astype(float)
+        ch = rng.integers(-1, 2, (n - 1, 4, 4)).astype(float)
+        f = _rand_forbid(rng, n, 0.2) if t % 3 == 0 else None
+        rc, bi, be = viterbi(L, u, ch, f)
+        rc1, bi1, be1, ng, _ = k1(lib, u, _chain_to_pair(ch, n), f, want_e=False)
+        assert (rc, bi, be) == (rc1, bi1, be1)
+        multi += ng > 1
+    assert multi >= 100
+    assert viterbi(L, np.zeros((1, 4)), np.zeros((0, 4, 4)))[:2] == (0, 0)  # n = 1
+
+
+def test_k4_beam_exact_when_beam_covers_all_prefixes(lib):
+    L = _k4_lib(lib)
+    rng = np.random.default_rng(43)
+    for t in range(60):
+        n = 2 + t % 5
+        u = rng.standard_normal((n, 4))
+        p = rng.standard_normal((n, n, 4, 4))
+        f = _rand_forbid(rng, n, 0.15) if t % 2 else None
+        rc, bi, be = beam(L, u, p, 4 ** (n - 1), f)
+        rc1, bi1, be1, _, e = k1(lib, u, p, f)
+        assert rc == 0 and abs(be - be1) <= 1e-9 and abs(e[bi] - be) <= 1e-9
+    u, p = np.zeros((3, 4)), np.zeros((3, 3, 4, 4))
+    assert beam(L, u, p, 1)[:2] == (0, 0)  # hòa -> index nhỏ nhất
+
+
+def test_k4_errors(lib):
+    L = _k4_lib(lib)
+    u, ch, p = np.zeros((4, 4)), np.zeros((3, 4, 4)), np.zeros((4, 4, 4, 4))
+    assert viterbi(L, np.zeros((32, 4)), np.zeros((31, 4, 4)))[0] == 2
+    bad = u.copy()
+    bad[1, 2] = math.nan
+    assert viterbi(L, bad, ch)[0] == 3 and beam(L, bad, p, 4)[0] == 3
+    badc = ch.copy()
+    badc[0, 0, 0] = math.inf
+    assert viterbi(L, u, badc)[0] == 3
+    dead = np.zeros((4, 4), np.uint8)
+    dead[2] = 1
+    assert viterbi(L, u, ch, dead)[0] == 5 and beam(L, u, p, 4, dead)[0] == 5
+    assert beam(L, u, p, 0)[0] == 2 and beam(L, u, p, 65537)[0] == 2
+    bi, be = ctypes.c_uint64(), ctypes.c_double()
+    assert L.accq_chain_viterbi(4, u.ctypes.data_as(_D), None, None, ctypes.byref(bi), ctypes.byref(be)) == 1
+    assert L.accq_pairwise_beam(4, None, None, None, 4, ctypes.byref(bi), ctypes.byref(be)) == 1
+
