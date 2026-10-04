@@ -6,7 +6,7 @@
 > 2. **Chỉ cô lập, KHÔNG xóa bỏ:** TUYỆT ĐỐI KHÔNG xóa bỏ các nội dung/kiến trúc cũ. Toàn bộ nội dung muốn thay đổi phải được đóng khung cô lập và đánh dấu `[ISOLATED / DEPRECATED / REPLACED]`.
 > 3. **Đồng bộ D:\2brain đầy đủ:** Đồng bộ và cập nhật đầy đủ mọi thay đổi, quyết định và bài học vào kho tri thức trung tâm `D:\2brain`.
 
-**Trạng thái:** `[ĐỀ XUẤT — chờ chủ dự án quyết]` · Liên quan: spec ACC §3 (P1–P6), §G-ENC (dòng 78), §8.12, §8.13, §8.15 · Code: `scripts/acc/hidden_pipeline.py` (commit 4a4c573)
+**Trạng thái:** `[ĐÃ DUYỆT — TẠM DỪNG G-ENC, chủ dự án 2026-10-04 11:40]` · ~~`[ĐỀ XUẤT — chờ chủ dự án quyết]`~~ `[REPLACED]` · Liên quan: spec ACC §3 (P1–P6), §G-ENC (dòng 78), §8.12, §8.13, §8.15 · Code: `scripts/acc/hidden_pipeline.py` (commit 4a4c573)
 
 ## 1. Dữ kiện (đã đo, seed 0, val 500 mẫu)
 
@@ -57,3 +57,4 @@ Kết luận chẩn đoán: `[ĐÃ KIỂM CHỨNG]` hidden-state token cuối c�
 | Thời gian | Agent | Nội dung |
 |---|---|---|
 | 2026-10-04 11:40 | Antigravity (Claude Opus 5.5, conv dac524cf) | Tạo mới: chẩn đoán G-ENC acc1, đo thêm probe ghép 3 layer (R² 0.220), 2 phương án, khuyến nghị tạm dừng |
+| 2026-10-04 11:41 | Antigravity (Claude Opus 5.5, conv dac524cf) | Chủ dự án duyệt tạm dừng G-ENC; cập nhật trạng thái; DD12 trong 2brain |
