@@ -18,7 +18,9 @@ N = 300
 
 @pytest.fixture(scope="module")
 def eng():
-    e = VivyquEngine()
+    # Changelog: 2026-10-04 11:54 | Antigravity (Claude Opus 5.5) | Test toán học Core, không phải watchdog:
+    # tắt watchdog wall-clock (trước đây CPU bận -> fallback A2 -> confidence lệch, test chập chờn).
+    e = VivyquEngine(timeout_us=float("inf"))
     assert e.load_e9_weights(os.path.join(ROOT, "data", "e9_weights.bin"))
     return e
 
@@ -34,6 +36,7 @@ def data():
 def _decide(eng, lat, masks, mode):
     assert eng.set_rotor_mode(mode)
     out = [eng.step(lat[i], constraint_mask=masks[i], mode="e9") for i in range(len(lat))]
+    assert not any(r.fallback_used for r in out), "kết quả phải đến từ Core, không phải fallback"
     return np.array([r.best_index for r in out]), np.array([r.confidence for r in out])
 
 

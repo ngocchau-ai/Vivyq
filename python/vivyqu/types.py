@@ -128,3 +128,6 @@ class DecisionResult:
     sequence_id: int
     error_code: int
     top_candidates: List[Tuple[int, float]] = field(default_factory=list)
+    # Changelog: 2026-10-04 | Antigravity (Claude Opus 5.5) | G2 §5.8: True khi kết quả đến từ Watchdog fallback
+    # (Baseline A2), không phải Core. Khi đó confidence = 0.0 (không có confidence đã calibrate).
+    fallback_used: bool = False

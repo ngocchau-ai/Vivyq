@@ -37,7 +37,10 @@ from .types import (
 class VivyquEngine:
     """Động cơ ra quyết định lượng tử VivyQu Core."""
 
-    def __init__(self, dll_path: Optional[str] = None):
+    def __init__(self, dll_path: Optional[str] = None, timeout_us: float = 500.0):
+        # Changelog: 2026-10-04 11:53 | Antigravity (Claude Opus 5.5) | timeout_us công khai (Sprint A, G2 §5.8)
+        if not (timeout_us > 0):
+            raise ValueError(f"timeout_us must be > 0, got {timeout_us}")
         self._dll_path = dll_path or self._find_dll()
         if not os.path.exists(self._dll_path):
             raise FileNotFoundError(f"Vivyqu Core DLL not found at: {self._dll_path}")
@@ -74,8 +77,8 @@ class VivyquEngine:
 
         # Bộ đệm Baseline A2 cho cứu nguy (Lazy loading)
         self._baseline_a2_weights = None
-        # Single timeout threshold: matches Watchdog T_max = 500 µs (SOP).
-        self._timeout_us = 500.0
+        # Single timeout threshold: matches Watchdog T_max = 500 µs (SOP) by default.
+        self._timeout_us = float(timeout_us)
 
 
     def _find_dll(self) -> str:
@@ -451,15 +454,19 @@ class VivyquEngine:
                         sequence_id=self._seq_id,
                         error_code=ERR_ALL_CONSTRAINTS_VIOLATED,
                     )
+            # [REPLACED 2026-10-04 — G2 §5.8] confidence=1.0 là confidence giả (Baseline A2 không có
+            # confidence đã calibrate) và bên gọi không phân biệt được với kết quả Core.
+            # Nay: confidence=0.0 (không tuyên bố độ tin cậy) + fallback_used=True.
             return DecisionResult(
                 best_index=best_k,
-                confidence=1.0,
+                confidence=0.0,
                 valid_candidates=valid_cnt,
                 latency_us=measured_latency_us,
                 norm_drift=0.0,
                 is_valid=True,
                 sequence_id=self._seq_id,
-                error_code=ERR_NONE
+                error_code=ERR_NONE,
+                fallback_used=True,
             )
 
 
@@ -472,7 +479,8 @@ class VivyquEngine:
             norm_drift=0.0,
             is_valid=False,
             sequence_id=self._seq_id,
-            error_code=ERR_CORE_TIMEOUT
+            error_code=ERR_CORE_TIMEOUT,
+            fallback_used=True,
         )
 
     def step_e9(
