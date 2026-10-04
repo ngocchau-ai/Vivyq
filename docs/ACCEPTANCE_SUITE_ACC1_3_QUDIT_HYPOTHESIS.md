@@ -119,6 +119,8 @@ Quy tắc: tham số của H2/H5/H6 phải khớp H3 ±5% (báo cáo số thực
 - 2026-10-03 | Antigravity (Claude Sonnet 5.5) | Revision #2 (§8): phân pha qubit-trước, arm tương hỗ, mô hình Gemma chạy CPU, chọn ACC-2 quantum extension ở cuối pha Q1. Lý do: quyết định chủ dự án 18:43. §0–§7 giữ nguyên; điểm bị thay thế ghi rõ trong §8.
 - 2026-10-04 | Antigravity (Claude Opus 5.5) | §8.11 cô lập rotor; §8.12 pre-register H5/H6 + Δ_interaction (tiêu chí khóa bằng code trước khi chạy). Lý do: chủ dự án duyệt 2026-10-04 05:54.
 - 2026-10-04 | Antigravity (Claude Opus 5.5) | §8.13 pre-register S2d (H+V, lệch cấu trúc, seed 5–9); §8.14 khung ACC-Q (statevector / MPS, 8/12/24 qudit) + đính chính MPS argmax. Kèm ADR `ADR_2026-10-04_PIGGYBACK_HOST_CPP_RUNTIME.md`. Lý do: chủ dự án duyệt 06:40 và 06:51.
+- 2026-10-04 07:17 | Antigravity (Claude Opus 5.5) | §8.14: khối REPLACED, đính chính trần runtime statevector theo số đo K2 (bảng gốc giữ nguyên).
+- 2026-10-04 07:48 | Antigravity (Claude Opus 5.5) | §8.14.1 pre-register đối chứng `C-solver-beam` cùng ngân sách thời gian + tiêu chí "có giá trị" chặt hơn. Lý do: số đo K4 (beam B=64 đạt 99%/92% ở n=6); chủ dự án duyệt 07:47.
 
 ## 8. REVISION #2 (2026-10-03) — theo quyết định chủ dự án
 
@@ -283,6 +285,25 @@ Lưu ý: 1 qudit-4 = 2 qubit; **24 qudit = 48 qubit → không thể dùng state
 - Cả hai hướng thua đối chứng cổ điển → ghi `[CHỒNG CHẬP MÔ PHỎNG KHÔNG CHO LỢI THẾ BIỂU DIỄN — quy mô n]`.
 **Phản biện đã ghi nhận trước:** mô phỏng chồng chập trên máy cổ điển lưu tường minh 2ⁿ biên độ; không có tăng tốc tính toán so với vét cạn. Giá trị nếu có là **biểu diễn/khái quát**, và đó là thứ suite này đo.
 - Lịch sử: 2026-10-04 | Antigravity (Claude Opus 5.5) | §8.14 pre-register khung ACC-Q (A statevector, B MPS) + đính chính MPS argmax.
+
+#### 8.14.1 BỔ SUNG PRE-REGISTER — Đối chứng solver-beam cùng ngân sách thời gian (2026-10-04 07:47, chủ dự án duyệt) `[KHÓA TRƯỚC KHI CHẠY — chặt hơn §8.14, không thay thế; chưa có code ACC-Q]`
+**Căn cứ (đo K4, `docs/DESIGN_ACCQ_KERNELS_CPP.md` §5):** khi dùng hàm năng lượng của chính instance (có sẵn ở thời điểm quyết định vì instance là đầu vào), beam cổ điển B=64 đạt tối ưu 0.990 (ACC-1 n=6) / 0.918 (ACC-2 n=6) trong ~0.03 ms; dày ngẫu nhiên n=12: B=64 → 0.25, B=1024 → 1.00. Arm học (A, B, H5, H2) mà chỉ so với nhau thì có thể "thắng" trong khi một solver rẻ đã giải gần hết bài.
+
+**Thêm arm đối chứng bắt buộc `C-solver-beam`:** `accq_pairwise_beam` (K4) trên năng lượng exact của instance (ACC-1: P_ij = w_ij·I + forbid; ACC-2: unary/pair cos như K1). Không học, không tham số. Với ACC-24 thêm `C-solver-SA` (simulated annealing, cùng ngân sách thời gian).
+
+**Khớp ngân sách thời gian (giao thức khóa):**
+1. Đo độ trễ quyết định p50 của từng arm học bằng C++ (1 luồng, tiến trình nền hạ Idle, ≥ 1000 lần gọi trên tập val, bỏ 5% đầu khởi động).
+2. Chọn B* = lũy thừa 2 lớn nhất trong [1, 65 536] sao cho p50 của `C-solver-beam(B*)` ≤ p50 của arm đó (đo cùng điều kiện). Mỗi arm học có cặp solver riêng theo B* của nó.
+3. Báo cáo thêm `C-solver-beam(B=64)` cố định để so giữa các lần chạy.
+4. B* và số đo latency ghi vào JSON kết quả **trước** khi chấm test.
+
+**Sửa tiêu chí "có giá trị" (chặt hơn §8.14, áp dụng cùng lúc):** ngoài các điều kiện ở §8.14, CI95 gộp của hướng A/B phải nằm hoàn toàn **trên** CI95 của `C-solver-beam(B*)` cùng ngân sách ở cùng ô (bài × quy mô).
+- Nếu `C-solver-beam(B*)` có top-1 ≥ 0.99 ở một ô → gắn `[BÀI ĐÃ GIẢI CỔ ĐIỂN Ở NGÂN SÁCH NÀY]`; ô đó **không được** dùng để ủng hộ giả thuyết. Arm học vẫn được báo cáo, chỉ để tham khảo.
+- Arm học thua `C-solver-beam(B*)` nhưng thắng các arm học khác → ghi `[LỢI THẾ BIỂU DIỄN TƯƠNG ĐỐI — KHÔNG CÓ GIÁ TRỊ QUYẾT ĐỊNH]`.
+- Hệ quả đọc trước (không phải kết luận): vùng duy nhất còn khả năng cho giả thuyết là ACC-12/ACC-24 dày, hoặc biến thể bài mà năng lượng **không quan sát được trực tiếp** (phải suy từ dữ liệu). Biến thể đó chưa được định nghĩa; nếu muốn đưa vào, phải pre-register riêng trước khi chạy.
+
+**Phản biện ghi nhận:** khớp latency phụ thuộc chất lượng cài đặt C++ của từng arm. Arm A/B chưa tối ưu SIMD (§5 thiết kế) sẽ có p50 cao, khiến B* lớn hơn và solver mạnh hơn. Đây là bất lợi thật của hướng A/B ở runtime, không phải lỗi giao thức. Để tách bạch, báo cáo thêm so sánh **cùng B=64**.
+- Lịch sử: 2026-10-04 07:48 | Antigravity (Claude Opus 5.5) | Thêm §8.14.1 (đối chứng solver-beam cùng ngân sách thời gian), theo duyệt của chủ dự án 07:47.
 
 
 
