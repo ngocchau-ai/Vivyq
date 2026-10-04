@@ -1,0 +1,25 @@
+version: "0.2"
+mission_id: ""
+plan_version: 1
+status: "DRAFT"  # DRAFT | APPROVED | ACTIVE | SUPERSEDED
+
+workstreams: []
+# Example:
+# - id: W1
+#   objective: ""
+#   serves_criteria: ["S1"]
+#   dependencies: []
+#   required_capabilities: []
+#   risk_class: "R1"
+#   owner: "orchestrator"
+#   acceptance_criteria: []
+#   tasks: []
+
+pilot:
+  required: true
+  description: ""
+  acceptance_criteria: []
+
+replan_policy:
+  allowed_scopes: ["LOCAL", "TASK", "WORKSTREAM"]
+  mission_change_requires_user: true

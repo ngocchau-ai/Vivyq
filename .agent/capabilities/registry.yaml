@@ -1,0 +1,25 @@
+version: "0.2"
+capabilities: []
+
+# Suggested entry:
+# - id: "video.render.ffmpeg"
+#   name: "FFmpeg"
+#   type: "cli"  # native | skill | plugin | connector | mcp | cli | app | custom_tool
+#   source:
+#     kind: "official"
+#     url: ""
+#     version: ""
+#     license: ""
+#   host_compatibility: []
+#   capabilities: []
+#   permissions_required: []
+#   risk_class: "R1"
+#   trust: "verified"  # verified | reviewed | unknown | rejected
+#   test:
+#     status: "PASS"
+#     date: ""
+#     golden_tasks: []
+#   install:
+#     location: ""
+#     rollback: ""
+#   notes: ""

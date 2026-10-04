@@ -1,0 +1,23 @@
+task_id: ""
+parent_goal: ""
+workstream_id: ""
+objective: ""
+serves_criteria: []
+inputs: []
+allowed_tools: []
+allowed_paths: []
+permissions: {}
+resource_budget:
+  tokens: null
+  money: null
+  time: null
+deadline: null
+expected_output: []
+acceptance_criteria: []
+return_format: ""
+may_delegate_further: false
+escalate_when:
+  - "permission boundary reached"
+  - "goal ambiguity"
+  - "resource budget insufficient"
+  - "three failed recovery attempts"

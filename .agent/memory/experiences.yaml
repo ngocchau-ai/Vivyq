@@ -1,0 +1,14 @@
+version: "0.2"
+experiences: []
+
+# Example:
+# - id: "EXP-001"
+#   context: ""
+#   problem: ""
+#   action: ""
+#   result: ""
+#   evidence: []
+#   confidence: "high"
+#   applicable_when: []
+#   do_not_apply_when: []
+#   last_verified: ""

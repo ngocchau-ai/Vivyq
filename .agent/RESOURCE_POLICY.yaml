@@ -1,0 +1,21 @@
+version: "0.2"
+
+defaults:
+  max_parallel_subagents: 4
+  max_parallel_browser_sessions: 2
+  min_free_disk_gb: 10
+  retry_same_failure_max: 3
+
+budgets:
+  money:
+    auto_spend_limit: 0
+  api:
+    daily_limits: {}
+  compute:
+    cpu_max_percent: null
+    gpu_max_jobs: null
+
+rules:
+  - "Do not exceed GOAL_BRIEF resource limits."
+  - "If resource limit is absent and action has material cost, ask."
+  - "Prefer queueing over uncontrolled parallelism."

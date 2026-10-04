@@ -1,0 +1,93 @@
+# Changelog: 2026-10-04 11:46 | Antigravity (Claude Opus 5.5, conv dac524cf) | DRAFT đầu tiên — chờ chủ dự án duyệt
+# Changelog: 2026-10-04 11:48 | Antigravity (Claude Opus 5.5, conv dac524cf) | Owner trả lời Q1–Q4 → APPROVED
+version: "0.2"
+mission_id: "vivyqu-e0q-completion"
+complexity: "C3"
+status: "APPROVED"
+
+goal:
+  statement: >
+    Hoàn thiện VivyQu theo docs/VIVYQU_DEVELOPMENT_DIRECTION_AND_ACCEPTANCE_CRITERIA.md v1.1:
+    vertical slice E0-Q thật, tái lập được, đi qua G0–G7 (Sprint A → B → C).
+  why: >
+    Chứng minh trên dữ liệu chưa thấy, VivyQu ra quyết định được thực thi + kiểm chứng,
+    tốt hơn hoặc rẻ hơn baseline trung thực cùng ngân sách. Kết quả âm ghi REJECTED.
+
+success_criteria:
+  - id: "S1"
+    description: "Sprint A: G0, G1, G2 PASS (blocker §5 có regression test, envelopes/ABI version hóa, fail-closed)"
+    how_to_verify: "pytest + ctest output, negative tests, decision record ký bởi reviewer độc lập (G1–G2) và owner (G0)"
+  - id: "S2"
+    description: "Sprint B: G3, G4 PASS; acceptance_thresholds.json freeze trước khi mở test"
+    how_to_verify: "runs/<run_id>/ FINALIZED, trace observation→receipt, verifier false-pass/false-fail"
+  - id: "S3"
+    description: "Sprint C: G5, G6 PASS; go/stop cho phase+mixing, MPS"
+    how_to_verify: "immutable runs từng nhánh, bảng quality/latency/memory công bằng"
+  - id: "S4"
+    description: "G7: PRODUCT ACCEPTED hoặc REJECTED trung thực"
+    how_to_verify: "acceptance report từ immutable runs, owner + reviewer độc lập ký"
+
+non_goals:
+  - "Các hướng đóng băng §2 (KV O(1), 72B sparse, early exit, steering, 7000 verifier, tăng tốc xN)"
+  - "S3 G-ENC (tạm dừng, DD12)"
+  - "Agent tự ký PASS bất kỳ gate nào"
+
+constraints:
+  budget: "0 tiền; chỉ tài nguyên máy local"
+  deadline: "Không giới hạn (owner 11:48)"
+  quality_bar: "Theo §13 Definition of Done của tài liệu canonical"
+  legal_or_platform_rules: []
+
+resources:
+  accounts_and_plans: []
+  existing_assets:
+    - "D:\\Vivyqu (C++ Core, Python harness, ACC suite, kernels ACC-Q)"
+    - "D:\\models (Gemma4 E4B GGUF, hidden-state data)"
+  hardware_software:
+    - "Windows, CPU-only, RAM 23.3 GB, w64devkit/CMake, Python 3.11"
+
+resource_limits:
+  cpu_max_percent: null        # cần owner quyết; S2d đang chạy nền
+  gpu_parallel_jobs: 0
+  max_browser_sessions: 0
+  min_free_disk_gb: 10
+  api_budget_daily: {}
+  total_budget: 0
+
+permissions:
+  research: "AUTO"
+  workspace_read: "AUTO"
+  workspace_write: "AUTO"
+  workspace_delete: "ASK"
+  install_into_sandbox: "AUTO"
+  install_system_or_host: "ASK"
+  connect_account: "ASK"
+  create_credentials: "ASK"
+  spend_money: "ASK"
+  publish_or_send: "ASK"        # gồm git push
+  production_deploy: "ASK"
+
+assumptions:
+  - "Tài liệu canonical v1.1 (chưa commit) là hợp đồng phát triển hiện hành"
+  - "Evidence Manifest 2026-09-29 là snapshot; phải đọc lại code trước khi sửa"
+
+open_questions: []
+
+owner_decisions_2026-10-04_11-48:
+  Q1_reviewer: "Claude Code hoặc Codex review, sau đó owner duyệt lại"
+  Q2_acc_line: "Chạy S2d tới hết theo pre-register rồi đóng dòng ACC; tập trung Sprint A"
+  Q3_domain: "Agent đề xuất 2–3 domain kèm nguồn scene khi tới Sprint B; owner chọn"
+  Q4_envelope: "Không deadline; tự làm R0/R1; hỏi khi R2/R3 và git push"
+
+# [REPLACED 11:48] open_questions cũ (Q1–Q4) đã được trả lời ở trên:
+#  - "Q1: Ai là reviewer độc lập ký G1–G6?"
+#  - "Q2: Dòng nghiên cứu ACC/qudit xếp ở đâu?"
+#  - "Q3: Domain E0-Q thật lấy từ miền nào?"
+#  - "Q4: Deadline và giới hạn CPU"
+
+authority:
+  goal_owner: "USER"
+  budget_owner: "USER"
+  orchestrator_may_spawn_agents: true
+  orchestrator_may_replan_within_scope: true
+  verifier_may_reject: true
