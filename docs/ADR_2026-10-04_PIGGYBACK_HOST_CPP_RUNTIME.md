@@ -55,5 +55,20 @@ Chương trình: `tools/piggyback_host/piggyback_host.cpp` (sản phẩm build �
 - **Dư thừa:** không thêm lớp IPC/HTTP; P2 dày bị thay bằng Hadamard.
 - **Hiệu quả:** trả lời trực tiếp tiêu chí "vài ms" bằng M1/M2.
 
+## 7. Kết quả đo (2026-10-04 07:00) `[PROTOTYPE — đạt tiêu chí độ trễ; chất lượng CHƯA đo]`
+Build: `tools/piggyback_host/build.ps1` (clang++ llvm-mingw, `-O2 -march=native`, liên kết tĩnh `libvivyqu_core.a` bản cô lập rotor + llama.cpp `836d571`). `--selftest` P2: chuẩn vào = chuẩn ra = 209.320331047361, sai số nghịch đảo 0, rò phần đệm 0 → PASS.
+Điều kiện: gemma4-e4b text-only Q4_K_M, CPU 6 luồng, prompt 8 token, 64 token sinh greedy × 3 lượt xen kẽ có/không `cb_eval`, lớp L = 31. Tiến trình nền (S2c, trích hidden-state) **vẫn chạy** nhưng hạ xuống ưu tiên `Idle`, host chạy `High` → không hoàn toàn sạch.
+| Lượt | M1 p50 / p99 / max (µs) | M2 ms/token không cb → có cb | Chậm đi | M3 | Lỗi Core |
+|---|---|---|---|---|---|
+| smoke (nền ưu tiên Normal, 32 token) | 145.6 / 1281 / 1281 | 658.4 → 909.5 | 38.1% | — | 0 |
+| run2 | 110.2 / 189.2 / 217.4 | 70.01 → 71.46 | **2.08%** | 0.00154 | 0 |
+| run3 (lặp lại) | 111.4 / 189.7 / 195.4 | 71.19 → 71.60 | **0.58%** | 0.00156 | 0 |
+- **M1 ĐẠT** (p99 ≈ 190 µs ≤ 1 ms, 2 lượt độc lập). **M2 ĐẠT** (≤ 5%). Quyết định cận biên ≈ 0.16% thời gian một token. `last_k` = 2758 ở cả run2 và run3 (greedy + Core tất định).
+- Smoke bị loại khỏi kết luận: 3 tiến trình cùng dùng 6 lõi ở ưu tiên ngang nhau, token chậm gấp ~9 lần → số đo phản ánh tranh CPU, không phản ánh kiến trúc. Giữ lại làm bằng chứng cho rủi ro vận hành: **host runtime cần ưu tiên CPU hoặc lõi riêng**.
+- M1 (~110 µs) cao hơn Core đo riêng (17.8 µs). `[GIẢ ĐỊNH — chưa tách đo]`: sau mỗi token LLM quét ~4 GB trọng số làm trôi ~2 MiB trọng số Core khỏi L3 (Core chạy với cache lạnh), cộng thêm FWHT ~49k phép cộng. Cách kiểm: đo riêng từng phần (P2 / Core) trong host.
+- Cảnh báo log `input tensor 'out_ids' ... is used by node 'result_norm' (GET_ROWS)` (42 dòng): log thông tin lúc reserve graph của llama.cpp, xuất hiện ở cả hai context → **bỏ qua có lý do**.
+- **Giới hạn:** chưa đo prompt dài/ngữ cảnh lớn; chưa đo khi Core chạy song song (luồng riêng); k* vô nghĩa về chất lượng (ADR §4).
+
 ## Lịch sử thay đổi
 - 2026-10-04 06:55 | Antigravity (Claude Opus 5.5) | Tạo mới ADR theo duyệt của chủ dự án (thứ tự thực thi 2 → 1 → 3).
+- 2026-10-04 07:02 | Antigravity (Claude Opus 5.5) | §7 kết quả đo M1/M2/M3 (2 lượt đạt, smoke có nhiễu bị loại khỏi kết luận).
