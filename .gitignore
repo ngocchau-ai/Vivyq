@@ -20,3 +20,19 @@ build/obj/
 .DS_Store
 Thumbs.db
 *.swp
+
+# Large benchmark data (GitHub 100MB limit; checksums stay in repo)
+data/e0_benchmark/*.npy
+*.npy.tmp
+
+# Large benchmark data (GitHub 100MB limit; checksums stay in repo)
+data/e0_benchmark/*.npy
+*.npy.tmp
+
+# Large benchmark data (GitHub 100MB limit; checksums stay in repo)
+data/e0_benchmark/*.npy
+*.npy.tmp
+
+# Large benchmark data (GitHub 100MB limit; checksums stay in repo)
+data/e0_benchmark/*.npy
+*.npy.tmp

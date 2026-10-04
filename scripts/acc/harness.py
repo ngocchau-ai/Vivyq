@@ -184,16 +184,19 @@ class E9CoreArm:
 from itertools import combinations  # noqa: E402
 
 
-def _site_states(n_sites: int, n_states: int) -> np.ndarray:
-    """(4096, n_sites): trạng thái từng site của ứng viên k. 6x4 -> qudit (base 4), 12x2 -> qubit (bit)."""
+def _site_states(n_sites: int, n_states: int, perm=None) -> np.ndarray:
+    """(4096, n_sites): trạng thái từng site của ứng viên k. 6x4 -> qudit (base 4), 12x2 -> qubit (bit).
+    perm (12,) nếu có: bit i của chỉ số đã hoán vị = bit perm[i] của k, rồi mới gom thành site (S2d D2)."""
     bits = int(np.log2(n_states))
     k = np.arange(N_CAND)
+    if perm is not None:
+        k = sum(((k >> int(src)) & 1) << i for i, src in enumerate(perm))
     return np.stack([(k >> (bits * i)) & (n_states - 1) for i in range(n_sites)], axis=1)
 
 
-def factor_incidence(n_sites: int, n_states: int, orders) -> np.ndarray:
+def factor_incidence(n_sites: int, n_states: int, orders, perm=None) -> np.ndarray:
     """G (M, 4096) 0/1: logit_k = sum_f out[f, local(k)] = (out @ G)[k]. Factor = tập con site có kích thước ∈ orders."""
-    st = _site_states(n_sites, n_states)
+    st = _site_states(n_sites, n_states, perm)
     rows = []
     for o in orders:
         for subset in combinations(range(n_sites), o):
@@ -213,14 +216,40 @@ FACTOR_SPECS = {
     "H6_qubit_interact": (12, 2, (1, 2, 3), 86),  # cùng cấu trúc trên 12 qubit -> tách 'qudit' khỏi 'tensor'
 }
 
+# Changelog: 2026-10-04 08:20 | Antigravity (Claude Opus 5.5) | S2d (spec §8.13 D2). Tách dict riêng để suite s2c
+# (lặp qua FACTOR_SPECS) giữ nguyên tập arm → tái lập được.
+MISALIGN_SEED = 20261004
+
+
+def broken_pairs(perm) -> int:
+    """Số site (cặp bit 2i, 2i+1 sau hoán vị) KHÔNG trùng một cặp gốc {2j, 2j+1} của bài."""
+    return sum(int(perm[2 * i]) // 2 != int(perm[2 * i + 1]) // 2 for i in range(6))
+
+
+def misaligned_perm(seed: int = MISALIGN_SEED, min_broken: int = 4) -> np.ndarray:
+    """Hoán vị 12 bit cố định; sinh lại (cùng rng) tới khi ≥ min_broken cặp bị phá (§8.13)."""
+    rng = np.random.default_rng(seed)
+    while True:
+        p = rng.permutation(12)
+        if broken_pairs(p) >= min_broken:
+            return p
+
+
+FACTOR_SPECS_S2D = {
+    "H5_qudit_misaligned": (6, 4, (1, 2, 3), 93),   # như H5_qudit_interact nhưng site ≠ site của bài
+    "H6_qubit_order4": (12, 2, (1, 2, 3, 4), 37),   # qubit đủ bậc biểu diễn factor cặp-qudit (4 bit)
+}
+FACTOR_PERM = {"H5_qudit_misaligned": "misaligned"}
+
 
 class FactorArm:
     """z -> h = z A (rank r) -> bảng factor out = h B + c (M) -> logits = out @ G (G cố định, không học)."""
 
     def __init__(self, name: str, seed=0):
-        n_sites, n_states, orders, r = FACTOR_SPECS[name]
+        n_sites, n_states, orders, r = {**FACTOR_SPECS, **FACTOR_SPECS_S2D}[name]
         self.name = name
-        self.G = factor_incidence(n_sites, n_states, orders)
+        perm = misaligned_perm() if FACTOR_PERM.get(name) == "misaligned" else None
+        self.G = factor_incidence(n_sites, n_states, orders, perm)
         m = self.G.shape[0]
         rng = np.random.default_rng(seed + 3)
         self.p = {"A": (rng.standard_normal((N_CAND, r)) / np.sqrt(N_CAND)).astype(np.float32),
@@ -316,3 +345,33 @@ def bootstrap_ci(x, B=2000, seed=0):
     x = np.asarray(x, float)
     m = r.choice(x, (B, len(x))).mean(1)
     return float(np.percentile(m, 2.5)), float(np.percentile(m, 97.5))
+
+
+# Changelog: 2026-10-04 08:20 | Antigravity (Claude Opus 5.5) | S2d D1 (spec §8.13): Đề xuất top-K + Kiểm chứng exact
+def verify_topk(scores, mask, correct, samples, task, k=8):
+    """Arm đề xuất K ứng viên điểm cao nhất; chỉ ứng viên trong mask được xét. Verifier exact (cùng cho mọi arm):
+    ACC-1 cost nhỏ nhất, ACC-2 năng lượng nhỏ nhất, ACC-3 ứng viên thỏa phương trình (= thuộc correct).
+    Hòa -> ứng viên index nhỏ hơn. Trả về ok_V, passk_ok (theo mẫu, int) và regret_V (ACC-1/2, None cho ACC-3)."""
+    n = len(scores)
+    kind = TASKS[task]["regret"]
+    ok_v = np.zeros(n, int)
+    passk = np.zeros(n, int)
+    reg = [] if kind else None
+    for i in range(n):
+        top = np.argsort(-scores[i], kind="stable")[:k]
+        top = np.sort(top[mask[i, top]])
+        if len(top) == 0:  # không có đề xuất hợp lệ -> sai, regret tính theo ứng viên argmax (giống top-1)
+            top = np.array([int(scores[i].argmax())])
+        passk[i] = int(correct[i, top].any())
+        if kind == "cost":
+            v = top[int(np.argmin(samples[i].meta["cost"][top]))]
+            opt = samples[i].meta["opt"]
+            reg.append((samples[i].meta["cost"][v] - opt) / (opt + 1e-12) if opt > 0 else samples[i].meta["cost"][v])
+        elif kind == "energy":
+            v = top[int(np.argmin(samples[i].meta["energy"][top]))]
+            reg.append(samples[i].meta["energy"][v] - samples[i].meta["e0"])
+        else:
+            hit = top[correct[i, top]]
+            v = int(hit[0]) if len(hit) else int(top[0])
+        ok_v[i] = int(correct[i, v] and mask[i, v])
+    return {"ok_V": ok_v, "passk_ok": passk, "regret_V": None if reg is None else np.asarray(reg, float)}
