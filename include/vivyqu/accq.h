@@ -36,4 +36,24 @@ ACCQ_API int32_t accq_pairwise_bruteforce(int32_t n, const double* unary, const 
                                           uint64_t* best_idx, double* best_E, uint64_t* n_ground,
                                           double* energies_out);
 
+// ---------------- K2: statevector qudit-4 (hướng A) ----------------
+// Số phức truyền dạng xen kẽ (re, im) double. Biên độ index = sum_i s_i * 4^i.
+// Cổng 1-qudit: U 4x4 row-major (32 double). Cổng 2-qudit trên (site_a, site_b): U 16x16 row-major (512 double),
+// chỉ số cục bộ = s_a*4 + s_b. Kernel KHÔNG kiểm tính unita (để còn áp toán tử bất kỳ); test kiểm chuẩn riêng.
+constexpr int32_t ACCQ_SV_MAX_SITES = 12;  // 4^12 biên độ complex128 = 256 MiB
+typedef struct AccqSV AccqSV;
+ACCQ_API int32_t accq_sv_create(int32_t n, AccqSV** out);   // trạng thái |0...0>
+ACCQ_API void    accq_sv_destroy(AccqSV* sv);
+ACCQ_API int32_t accq_sv_reset(AccqSV* sv);
+ACCQ_API int32_t accq_sv_set(AccqSV* sv, const double* amp_reim, uint64_t len);  // len = 4^n
+ACCQ_API int32_t accq_sv_get(const AccqSV* sv, double* amp_reim, uint64_t len);
+ACCQ_API int32_t accq_sv_apply1(AccqSV* sv, int32_t site, const double* u_reim);
+ACCQ_API int32_t accq_sv_apply2(AccqSV* sv, int32_t site_a, int32_t site_b, const double* u_reim);
+ACCQ_API int32_t accq_sv_norm2(const AccqSV* sv, double* out);
+ACCQ_API int32_t accq_sv_probs(const AccqSV* sv, double* probs, uint64_t len);  // |psi_k|^2
+// Top-K theo xác suất Born, mask: NULL hoặc 4^n byte (khác 0 = được phép). Hòa -> index nhỏ hơn trước.
+// k_out = số ứng viên thực sự trả về (<= k nếu ít ứng viên hợp lệ).
+ACCQ_API int32_t accq_sv_topk(const AccqSV* sv, const uint8_t* mask, int32_t k, uint64_t* idx, double* prob,
+                              int32_t* k_out);
+
 ACCQ_API const char* accq_version();

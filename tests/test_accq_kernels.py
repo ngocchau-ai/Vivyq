@@ -142,3 +142,125 @@ def test_k1_errors(lib):
     assert k1(lib, u, p, tol=-1.0)[0] == 1
     bi = ctypes.c_uint64()
     assert lib.accq_pairwise_bruteforce(6, None, None, None, 0.0, ctypes.byref(bi), None, None, None) == 1
+
+
+# ---------------- K2: statevector ----------------
+_P = ctypes.c_void_p
+
+
+def _sv_lib(lib):
+    if getattr(lib, "_sv_ready", False):
+        return lib
+    lib.accq_sv_create.argtypes = [ctypes.c_int32, ctypes.POINTER(_P)]
+    lib.accq_sv_destroy.argtypes = [_P]
+    lib.accq_sv_destroy.restype = None
+    for name, args in {"accq_sv_reset": [_P], "accq_sv_set": [_P, _D, ctypes.c_uint64],
+                       "accq_sv_get": [_P, _D, ctypes.c_uint64], "accq_sv_apply1": [_P, ctypes.c_int32, _D],
+                       "accq_sv_apply2": [_P, ctypes.c_int32, ctypes.c_int32, _D], "accq_sv_norm2": [_P, _D],
+                       "accq_sv_probs": [_P, _D, ctypes.c_uint64],
+                       "accq_sv_topk": [_P, ctypes.POINTER(ctypes.c_uint8), ctypes.c_int32,
+                                        ctypes.POINTER(ctypes.c_uint64), _D, ctypes.POINTER(ctypes.c_int32)]}.items():
+        getattr(lib, name).argtypes = args
+        getattr(lib, name).restype = ctypes.c_int32
+    lib.accq_sv_create.restype = ctypes.c_int32
+    lib._sv_ready = True
+    return lib
+
+
+def _reim(m):
+    m = np.ascontiguousarray(m, np.complex128)
+    return np.ascontiguousarray(m.view(np.float64).ravel())
+
+
+def _unitary(rng, d):
+    q, r = np.linalg.qr(rng.standard_normal((d, d)) + 1j * rng.standard_normal((d, d)))
+    return q * (np.diag(r) / np.abs(np.diag(r)))
+
+
+def _ref1(psi, n, site, U):
+    T = psi.reshape([4] * n)
+    ax = n - 1 - site
+    return np.moveaxis(np.tensordot(U, T, axes=([1], [ax])), 0, ax).reshape(-1)
+
+
+def _ref2(psi, n, sa, sb, U):
+    T = psi.reshape([4] * n)
+    aa, ab = n - 1 - sa, n - 1 - sb
+    R = np.tensordot(U.reshape(4, 4, 4, 4), T, axes=([2, 3], [aa, ab]))
+    return np.moveaxis(R, [0, 1], [aa, ab]).reshape(-1)
+
+
+class _SV:
+    def __init__(self, lib, n):
+        self.lib, self.n, self.h = _sv_lib(lib), n, _P()
+        assert self.lib.accq_sv_create(n, ctypes.byref(self.h)) == 0
+
+    def get(self):
+        buf = np.empty(2 * 4 ** self.n)
+        assert self.lib.accq_sv_get(self.h, buf.ctypes.data_as(_D), 4 ** self.n) == 0
+        return buf.view(np.complex128)
+
+    def close(self):
+        self.lib.accq_sv_destroy(self.h)
+
+
+@pytest.mark.parametrize("n", [3, 4])
+def test_k2_matches_numpy_tensordot_and_preserves_norm(lib, n):
+    rng = np.random.default_rng(20 + n)
+    sv = _SV(lib, n)
+    psi = np.zeros(4 ** n, complex)
+    psi[0] = 1
+    for _ in range(3):  # 3 lớp: cổng 1-qudit mọi site + cổng 2-qudit cặp ngẫu nhiên (kể cả a > b)
+        for s in range(n):
+            U = _unitary(rng, 4)
+            u = _reim(U)
+            assert lib.accq_sv_apply1(sv.h, s, u.ctypes.data_as(_D)) == 0
+            psi = _ref1(psi, n, s, U)
+        for _ in range(n):
+            a, b = rng.choice(n, 2, replace=False)
+            U = _unitary(rng, 16)
+            u = _reim(U)
+            assert lib.accq_sv_apply2(sv.h, int(a), int(b), u.ctypes.data_as(_D)) == 0
+            psi = _ref2(psi, n, int(a), int(b), U)
+    got = sv.get()
+    assert np.max(np.abs(got - psi)) <= 1e-12
+    nrm = ctypes.c_double()
+    assert lib.accq_sv_norm2(sv.h, ctypes.byref(nrm)) == 0 and abs(nrm.value - 1) <= 1e-12
+    probs = np.empty(4 ** n)
+    assert lib.accq_sv_probs(sv.h, probs.ctypes.data_as(_D), 4 ** n) == 0
+    assert np.max(np.abs(probs - np.abs(psi) ** 2)) <= 1e-12
+    # top-K có mask: so với sắp xếp NumPy (hòa -> index nhỏ)
+    mask = (rng.random(4 ** n) < 0.5).astype(np.uint8)
+    idx = (ctypes.c_uint64 * 8)()
+    pr = np.empty(8)
+    ko = ctypes.c_int32()
+    assert lib.accq_sv_topk(sv.h, mask.ctypes.data_as(ctypes.POINTER(ctypes.c_uint8)), 8, idx, pr.ctypes.data_as(_D),
+                            ctypes.byref(ko)) == 0
+    allowed = np.flatnonzero(mask)
+    order = allowed[np.lexsort((allowed, -probs[allowed]))][:8]
+    assert ko.value == 8 and list(idx) == order.tolist()
+    sv.close()
+
+
+def test_k2_set_get_roundtrip_topk_ties_and_errors(lib):
+    sv = _SV(lib, 2)
+    amp = np.zeros(16, complex)
+    amp[[3, 5, 9]] = 1 / np.sqrt(3)  # hòa 3 ứng viên
+    a = _reim(amp)
+    assert lib.accq_sv_set(sv.h, a.ctypes.data_as(_D), 16) == 0
+    assert np.allclose(sv.get(), amp, atol=0)
+    idx = (ctypes.c_uint64 * 20)()
+    pr = np.empty(20)
+    ko = ctypes.c_int32()
+    assert lib.accq_sv_topk(sv.h, None, 20, idx, pr.ctypes.data_as(_D), ctypes.byref(ko)) == 0
+    assert ko.value == 16 and list(idx)[:3] == [3, 5, 9]
+    z = np.zeros(32)
+    assert lib.accq_sv_apply1(sv.h, 2, z.ctypes.data_as(_D)) == 1      # site ngoài phạm vi
+    assert lib.accq_sv_apply2(sv.h, 1, 1, np.zeros(512).ctypes.data_as(_D)) == 1  # cùng site
+    bad = np.zeros(32)
+    bad[5] = np.nan
+    assert lib.accq_sv_apply1(sv.h, 0, bad.ctypes.data_as(_D)) == 3
+    assert lib.accq_sv_set(sv.h, a.ctypes.data_as(_D), 15) == 2
+    sv.close()
+    h = _P()
+    assert lib.accq_sv_create(13, ctypes.byref(h)) == 2 and lib.accq_sv_create(0, ctypes.byref(h)) == 2

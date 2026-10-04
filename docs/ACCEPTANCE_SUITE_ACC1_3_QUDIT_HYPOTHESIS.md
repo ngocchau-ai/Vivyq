@@ -264,6 +264,9 @@ Có tune lr đồng đều (3 lần thử/arm, chọn trên val seed 0; hầu h�
 | 32 (16) | 32 GiB | **Vượt RAM** → mốc 32 qubit = trần lý thuyết, không phải mục tiêu chạy |
 Lưu ý: 1 qudit-4 = 2 qubit; **24 qudit = 48 qubit → không thể dùng statevector**.
 
+> **[REPLACED 2026-10-04 07:17 — dòng "20 (10) | 8 MiB (vừa L3) | Trần runtime 'ms'" và "16 (8) | Runtime, cỡ µs–ms" ở bảng trên bị THAY THẾ bởi số đo K2; bảng gốc giữ nguyên làm lịch sử]**
+> Vừa bộ nhớ ≠ vừa ngân sách tính toán: một lớp mạch dày (n cổng 1-qudit + n−1 cổng 2-qudit 16×16) tốn ≈ 16·4ⁿ·(n−1) phép nhân-cộng phức. Đo K2 (complex128, vô hướng, `-O2 -fcx-limited-range`, CPU có tiến trình nền): **n=6: 0.29 ms/lớp · n=8: 7.1 ms/lớp · n=10: 198 ms/lớp**. Hệ quả: hướng A chỉ nằm trong ngân sách "ms" ở **n ≤ 6–7 qudit** với vài lớp; n=8 là cỡ chục ms; n ≥ 10 chỉ để nghiên cứu. SIMD/complex64 có thể cải thiện hằng số (ước ~2–4× `[GIẢ ĐỊNH]`), không đổi bậc tăng 4ⁿ.
+
 **Hướng A — Statevector exact (Born machine có điều kiện):** ψ(z) = U_L(θ, z)⋯U_1(θ, z)|0⟩ trên n qudit; cổng 1-qudit và 2-qudit tham số hóa, góc = hàm tuyến tính của z; P(k) = |ψ_k|² trên 4ⁿ ứng viên (= ứng viên của bài). Áp dụng cho ACC-8 (16 qubit) và ACC-12 (24 qubit, chỉ nghiên cứu).
 **Hướng B — Tensor network / MPS (Born machine có điều kiện):** ψ(s|z) = A₁[s₁](z)⋯Aₙ[sₙ](z), bond χ ∈ {4, 8, 16}; tensor lõi = ánh xạ hạng thấp từ z. Áp dụng ACC-8, ACC-12, ACC-24.
 - **Đính chính (2026-10-04, agent tự sửa phát biểu trong thảo luận trước):** với MPS χ > 1, **argmax |ψ(s)|² nói chung KHÔNG giải exact được bằng Viterbi** (biên độ là tổng theo đường bond, không phải max-product). Phần exact và rẻ của MPS là **lấy mẫu Born chính xác** O(n·d·χ²)/mẫu và tính xác suất biên. Vì vậy hướng B ra quyết định bằng **lấy mẫu K + verifier** (giống D1 §8.13) hoặc beam search; Viterbi exact chỉ đúng cho **factor graph dạng chuỗi** (log-tuyến tính), là arm đối chứng cổ điển.

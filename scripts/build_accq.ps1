@@ -7,7 +7,7 @@ $Obj = Join-Path $Root "build\obj_accq"
 New-Item -ItemType Directory -Force $Bin, $Obj | Out-Null
 $Sources = @(Get-ChildItem (Join-Path $Root "src\accq") -Filter *.cpp | ForEach-Object { $_.FullName })
 if (-not $Sources) { throw "No sources in src/accq" }
-$Flags = @("-std=c++20", "-O2", "-march=native", "-DNDEBUG", "-DVIVYQU_ACCQ_EXPORTS", "-I$Root\include", "-Wall", "-Wextra")
+$Flags = @("-std=c++20", "-O2", "-march=native", "-DNDEBUG", "-DVIVYQU_ACCQ_EXPORTS", "-I$Root\include", "-Wall", "-Wextra", "-fcx-limited-range")  # cx-limited-range: inputs are validated finite
 & clang++ -shared -static @Flags @Sources -o (Join-Path $Bin "vivyqu_accq.dll")
 if ($LASTEXITCODE -ne 0) { throw "DLL build failed ($LASTEXITCODE)" }
 $Objs = @()

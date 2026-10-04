@@ -36,5 +36,13 @@ Kiểm thử: `tests/test_accq_kernels.py` (pytest + ctypes, tham chiếu NumPy/
 | Tham chiếu NumPy và kernel cùng sai một kiểu | K1 đối chiếu với verifier thuần Python đã có (`verify_reference`/`energy_reference`) trên mẫu ngẫu nhiên |
 | Statevector n=12 (128 MiB complex64 / 256 MiB complex128) làm chậm test | Test đúng chỉ ở n ≤ 4; n lớn chỉ bench |
 
+## 5. Kết quả theo kernel
+| Kernel | Cổng | Bằng chứng | Hiệu năng (CPU có tiến trình nền) |
+|---|---|---|---|
+| K1 | **PASS** | `tests/test_accq_kernels.py` K1 5/5: 200 instance ACC-1 + 200 ACC-2 khớp \|ΔE\| ≤ 1e-9, argmin/số ground trùng, verifier thuần Python khớp; n=8 khớp NumPy; tie-break; mã lỗi 1/2/3/5. Commit `2546cc7` | n=8: 1.4 ms · n=10: 32 ms · n=12: 0.53 s (2-pass, không cấp phát) |
+| K2 | **PASS** | 3/3 test K2: khớp tensordot NumPy n=3,4 tới 1e-12 sau 3 lớp cổng unita ngẫu nhiên (kể cả cặp site đảo thứ tự), chuẩn = 1 ± 1e-12, top-K có mask khớp lexsort, set/get, hòa, mã lỗi | Mỗi lớp: n=6: 0.29 ms · n=8: 7.1 ms · n=10: 198 ms. Bản đầu (duyệt cả N chỉ số + `__muldc3`): n=8: 30.8 ms, n=10: 429 ms |
+- Bài học K2: cờ `-fcx-limited-range` bỏ `__muldc3` (an toàn vì kernel từ chối đầu vào không hữu hạn); duyệt cơ sở bằng chèn 2 bit 0 thay vì quét cả N.
+
 ## Lịch sử thay đổi
 - 2026-10-04 07:12 | Antigravity (Claude Opus 5.5) | Tạo mới thiết kế kernel K1–K4 + cổng kiểm chứng, theo duyệt bước 3.
+- 2026-10-04 07:17 | Antigravity (Claude Opus 5.5) | §5 kết quả K1, K2 (PASS) + số đo; đính chính trần runtime statevector ghi ở spec §8.14 (REPLACED).
