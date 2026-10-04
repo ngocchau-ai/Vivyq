@@ -61,6 +61,11 @@
    - Một tiến trình: libllama (llama.cpp 836d571) + cb_eval bắt `l_out-L` token cuối + `vivyqu_core_step_e9`; P2 runtime = Hadamard ngẫu nhiên có đệm 2560->4096 (thay ma trận dày 42-84 MB).
    - Đo (commit 00a400b): quyết định cận biên p50 ~110 µs, p99 ~190 µs (2 lượt); bắt hidden-state làm chậm sinh token 0.58-2.08%. Chất lượng CHƯA đo (trọng số E9 chưa train trên hidden-state).
    - Bắt buộc trước S4: `hidden_pipeline.py` đổi sang cùng P2 Hadamard. Rủi ro mở: lệch phiên bản llama.cpp với Vivy (a94d563); host cần ưu tiên CPU (smoke tranh CPU làm token chậm ~9 lần).
+
+10. **[2026-10-04] Giả thuyết qudit phải thắng solver cổ điển cùng ngân sách thời gian** (chủ dự án duyệt 07:47; spec §8.14.1; kernel `vivyqu_accq` K1–K4 commit 2546cc7..ee447e9):
+   - Căn cứ: beam B=64 trên năng lượng exact đạt tối ưu 99% (ACC-1) / 92% (ACC-2) ở n=6 trong ~0.03 ms.
+   - Quy tắc: mọi arm học (statevector, MPS, factor, MLP) so với `C-solver-beam(B*)` có p50 C++ ≤ p50 của arm. Ô nào solver đạt ≥ 0.99 thì không được dùng để ủng hộ giả thuyết.
+   - Hệ quả: vùng còn khả năng = n lớn dày (12/24) hoặc bài mà năng lượng không quan sát được (cần pre-register riêng).
 ---
 
 ## 2. LỊCH SỬ THAY ĐỔI (AUDIT TRAIL)
@@ -72,3 +77,4 @@
 | 2026-09-27 19:15 | Antigravity IDE | Bổ sung Quyết định 6 (SHM Daemon E9 Mode) và Quyết định 7 (Hamiltonian Torque Descent thích nghi trực tuyến p50 = 48.60 µs). |
 | 2026-10-04 06:00 | Antigravity IDE (Claude Opus 5.5) | Bổ sung Quyết định 8: cô lập rotor (bằng chứng ACC-1..3 §8.10, thực thi §8.11). |
 | 2026-10-04 07:03 | Antigravity IDE (Claude Opus 5.5) | Bổ sung Quyết định 9: runtime C/C++ + Piggyback Host (ADR 2026-10-04, M1/M2 đạt). |
+| 2026-10-04 07:49 | Antigravity IDE (Claude Opus 5.5) | Bổ sung Quyết định 10: đối chứng solver-beam cùng ngân sách thời gian cho ACC-Q (spec §8.14.1). |
