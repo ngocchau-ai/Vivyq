@@ -28,6 +28,13 @@ Cung cấp các kernel **suy luận/giải mã/sinh nhãn** bằng C++ để: (a
 
 > **[REPLACED 2026-10-04 07:20] Cổng lấy mẫu K3 "TV < 0.01 với 200 000 mẫu"** → **1 000 000 mẫu**. Lý do: với 4⁴ = 256 kết cục, TV kỳ vọng do nhiễu lấy mẫu ≈ ½·√(2/π)·Σ√(p/N); phân phối gần đều cho ≈ 0.014 ở N = 2·10⁵ (cổng sẽ trượt dù kernel đúng), ≈ 0.0064 ở N = 10⁶. Ngưỡng 0.01 giữ nguyên. Thêm cổng logp: logp mẫu = log(\|ψ\|²/chuẩn) tới 1e-10.
 
+> **Chi tiết K4 (bổ sung 2026-10-04 07:23, trước khi viết code):**
+> - `accq_chain_viterbi(n, unary[n·4], chain[(n−1)·16], forbid|NULL, &best_idx, &best_E)`, n ≤ 31; `chain[i·16 + a·4 + b]` = P_{i,i+1}(a, b). Hòa: truy vết chọn trạng thái nhỏ nhất từ site n−1 về 0 (site cao = chữ số có trọng số lớn) → index nhỏ nhất **trong số học của DP**.
+> - `accq_pairwise_beam(n, unary, pair[n·n·16], forbid|NULL, B, &best_idx, &best_E)`, n ≤ 31, 1 ≤ B ≤ 65 536; duyệt site 0→n−1, giữ B tiền tố có năng lượng riêng phần nhỏ nhất (hòa → index nhỏ hơn). Không đảm bảo tối ưu.
+> - Cả hai trả `ACCQ_ERR_INFEASIBLE` nếu một site bị cấm cả 4 trạng thái.
+> - **Cổng Viterbi (diễn giải chính xác):** trên 300 instance chuỗi ngẫu nhiên n = 2..8 (có forbid): \|E_vit − E_K1\| ≤ 1e-9, năng lượng K1 của `best_idx` Viterbi ≤ E_K1 + 1e-9, và `best_idx` trùng K1 khi K1 báo n_ground = 1. (Thứ tự cộng khác nhau nên hòa sát nút có thể lệch ở bit cuối; khi đó cả hai đều là ground state.)
+> - **Kiểm tra tự nhất quán beam (cổng phụ):** B ≥ 4^(n−1) ⇒ beam = K1 (n ≤ 6). Tỷ lệ đạt tối ưu với B ∈ {8, 64} trên ACC-1/ACC-2 và n = 12 chỉ là **báo cáo**.
+
 Kiểm thử: `tests/test_accq_kernels.py` (pytest + ctypes, tham chiếu NumPy/`scripts/acc`), thêm kiểm tham số sai (null, n ngoài phạm vi, NaN) phải trả đúng mã lỗi.
 
 ## 4. Rủi ro (Devil's Advocate)
