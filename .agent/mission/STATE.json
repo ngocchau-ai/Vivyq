@@ -3,7 +3,7 @@
   "mission_id": "vivyqu-e0q-completion",
   "status": "PAUSED",
   "paused_at": "2026-10-13T05:40+07:00",
-  "paused_by": "Antigravity IDE (theo chỉ thị owner Ngọc Châu)",
+  "paused_by": "Antigravity IDE (theo chỉ thị owner anh Vĩ)",
   "resume_from_tag": "vivyqu-paused-2026-10-13",
   "status_before_pause": "WAITING_APPROVAL",
   "current_workstream": "Sprint A (G0-G2)",
