@@ -13,6 +13,8 @@ Kiểm định toàn diện:
 import os
 import sys
 import time
+import ctypes
+import warnings
 import numpy as np
 
 # Thêm thư mục python vào sys.path
@@ -99,8 +101,10 @@ def test_integration():
         kernel32.SetProcessAffinityMask.argtypes = [ctypes.c_void_p, ctypes.c_size_t]
         kernel32.SetProcessAffinityMask.restype = ctypes.c_int
         kernel32.SetProcessAffinityMask(ctypes.c_void_p(-1), 1 << 2) # Pin to CPU core 2
-    except Exception:
-        pass
+        print("      CPU pin/priority: applied (core 2, HIGH_PRIORITY_CLASS)")
+    except Exception as exc:
+        # Khong nuot im lang: ket qua do phai ghi ro dieu kien do (canonical: CPU pinning/clock information).
+        print(f"      CPU pin/priority: NOT applied ({type(exc).__name__}: {exc}) -> so do kem nhieu")
 
     import gc
     # Cache pre-warming
@@ -167,9 +171,16 @@ def test_integration():
 
     engine.close()
 
-    # Windows box: Core-Only p50 often ~10.1µs vs Sprint1 <10µs target — allow 15µs.
-    is_pass = (p95_fast < 15.0) and (p50_core < 15.0) and (p99_fast < 25.0)
-    print(f"\n>> VERDICT: [{'PASS' if is_pass else 'FAIL'}] - Fast-Path SLA Target {'Achieved' if is_pass else 'Exceeded'} (p95: {p95_fast:.2f} µs < 15.0 µs, p50: {p50_core:.2f} µs < 15.0 µs)")
+    # T2 (SLA_PROPOSAL_2026-10-12, chu du an duyet 2026-10-12): cong chong hoi quy qua Python/ctypes.
+    #   Cong: p50 core < 15, p50 fast < 15, p95 fast < 25 (us). p99 chi bao cao.
+    #   Muc tieu (khong strict, canh bao khi chua dat): p95 fast <= 15, p99 fast <= 15 (us).
+    is_pass = (p50_core < 15.0) and (p50_fast < 15.0) and (p95_fast < 25.0)
+    print(f"\n>> VERDICT: [{'PASS' if is_pass else 'FAIL'}] - T2 gate (p50 core {p50_core:.2f} < 15, p50 fast {p50_fast:.2f} < 15, p95 fast {p95_fast:.2f} < 25 us); p99 fast {p99_fast:.2f} us (report only)")
+    if p95_fast > 15.0 or p99_fast > 15.0:
+        warnings.warn(
+            f"T2 target not met (p95 {p95_fast:.2f} us / p99 {p99_fast:.2f} us vs target <= 15 us); gate still PASS",
+            UserWarning,
+        )
     assert is_pass
 
 

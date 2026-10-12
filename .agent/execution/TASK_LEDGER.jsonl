@@ -1,1 +1,4 @@
 {"schema":"v0.2","note":"Mỗi dòng sau là một task event JSON độc lập."}
+{"ts":"2026-10-04T11:55+07:00","task":"A1","gate":"G2","blocker":"5.8","status":"DONE_PENDING_REVIEW","commit":"see git log","evidence":"test_fallback_honesty 6/6; rotor+htd 8/8 runs; full 165 pass / 2 timing fail under S2d load"}
+{"ts":"2026-10-04T11:56+07:00","task":"A2","gate":"G1-G2","blocker":"5.6","status":"REPRODUCED_WAITING_DESIGN_DECISION","evidence":"scratch/ctx_repro.py: B init reset A rotor angle; A.set_rotor_mode leaks to B; A.step after B.close() returns rc=0 (use-after-free/silent reinit)"}
+{"ts":"2026-10-13T05:40+07:00","task":"MISSION","status":"PAUSED","by":"Antigravity IDE (owner directive)","tag":"vivyqu-paused-2026-10-13","resume_point":"A2 §5.6 waiting owner ABI decision"}

@@ -1,14 +1,18 @@
 {
   "version": "0.2",
   "mission_id": "vivyqu-e0q-completion",
-  "status": "EXECUTING",
+  "status": "PAUSED",
+  "paused_at": "2026-10-13T05:40+07:00",
+  "paused_by": "Antigravity IDE (theo chỉ thị owner Ngọc Châu)",
+  "resume_from_tag": "vivyqu-paused-2026-10-13",
+  "status_before_pause": "WAITING_APPROVAL",
   "current_workstream": "Sprint A (G0-G2)",
-  "current_task": "A1: test_rotor_isolation phụ thuộc thứ tự (blocker §5.6)",
+  "current_task": "A2: §5.6 global g_ctx — chọn phương án sửa",
   "last_checkpoint": "2026-10-04T11:48+07:00 GOAL_BRIEF APPROVED (Q1-Q4)",
-  "next_action": "Tái hiện lỗi thứ tự test rotor, tìm root cause",
+  "next_action": "Khi resume: owner chọn phương án ABI cho §5.6, sau đó tiếp A2",
   "blocker": null,
-  "waiting_for": null,
+  "waiting_for": "USER: phương án ABI cho §5.6",
   "plan_version": 1,
   "parallel": "S2d chạy nền tới hết (Q2), sau đó analyze_s2d và đóng dòng ACC",
-  "last_updated": "2026-10-04T11:49+07:00"
+  "last_updated": "2026-10-13T05:40+07:00"
 }

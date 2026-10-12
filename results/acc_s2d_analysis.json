@@ -1,0 +1,449 @@
+{
+ "verdict": {
+  "tasks_evaluated": 3,
+  "final": true,
+  "D1_tasks_passed": 1,
+  "D2A_tasks_passed": 0,
+  "D2Q_tasks_passed": 2,
+  "H5_supported_HV": false,
+  "D1_L": "[CHƯA ĐO]",
+  "labels": [
+   "[QUDIT KHÔNG HƠN QUBIT ĐỦ BẬC]"
+  ]
+ },
+ "per_task": {
+  "acc1": {
+   "top1_pooled": {
+    "H1_linear_rank64": 0.152,
+    "H2_mlp_param_matched": 0.2232,
+    "H4_e9_no_rotor": 0.1752,
+    "H6_qubit_interact": 0.3356,
+    "H5_qudit_interact": 0.3476,
+    "H5_qudit_misaligned": 0.326,
+    "H6_qubit_order4": 0.31
+   },
+   "ci95_top1": {
+    "H1_linear_rank64": [
+     0.138,
+     0.166
+    ],
+    "H2_mlp_param_matched": [
+     0.2072,
+     0.2388
+    ],
+    "H4_e9_no_rotor": [
+     0.1608,
+     0.1904
+    ],
+    "H6_qubit_interact": [
+     0.31679,
+     0.35400999999999994
+    ],
+    "H5_qudit_interact": [
+     0.3292,
+     0.3656
+    ],
+    "H5_qudit_misaligned": [
+     0.3084,
+     0.34480999999999995
+    ],
+    "H6_qubit_order4": [
+     0.29198999999999997,
+     0.3284
+    ]
+   },
+   "top1_V_pooled": {
+    "H1_linear_rank64": 0.4704,
+    "H2_mlp_param_matched": 0.5208,
+    "H4_e9_no_rotor": 0.4828,
+    "H6_qubit_interact": 0.6364,
+    "H5_qudit_interact": 0.6692,
+    "H5_qudit_misaligned": 0.6584,
+    "H6_qubit_order4": 0.604
+   },
+   "ci95_top1_V": {
+    "H1_linear_rank64": [
+     0.4512,
+     0.4896
+    ],
+    "H2_mlp_param_matched": [
+     0.5016,
+     0.54
+    ],
+    "H4_e9_no_rotor": [
+     0.4632,
+     0.5028
+    ],
+    "H6_qubit_interact": [
+     0.61799,
+     0.6548
+    ],
+    "H5_qudit_interact": [
+     0.6507900000000001,
+     0.688
+    ],
+    "H5_qudit_misaligned": [
+     0.6392,
+     0.6772
+    ],
+    "H6_qubit_order4": [
+     0.5856,
+     0.624
+    ]
+   },
+   "regret_V_mean": {
+    "H1_linear_rank64": 0.4862973334630072,
+    "H2_mlp_param_matched": 0.39547277129496267,
+    "H4_e9_no_rotor": 0.46497297807822197,
+    "H6_qubit_interact": 0.2739832031950779,
+    "H5_qudit_interact": 0.23235677668265398,
+    "H5_qudit_misaligned": 0.2465970540650792,
+    "H6_qubit_order4": 0.3217165267317524
+   },
+   "mask_violations": {
+    "H1_linear_rank64": 0,
+    "H2_mlp_param_matched": 0,
+    "H4_e9_no_rotor": 0,
+    "H6_qubit_interact": 0,
+    "H5_qudit_interact": 0,
+    "H5_qudit_misaligned": 0,
+    "H6_qubit_order4": 0
+   },
+   "D1_beats": {
+    "H1_linear_rank64": true,
+    "H2_mlp_param_matched": true,
+    "H4_e9_no_rotor": true,
+    "H6_qubit_interact": false
+   },
+   "D1_pass": false,
+   "D1_L": "[CHƯA ĐO]",
+   "delta_align": {
+    "mean": 0.0216,
+    "ci95": [
+     -0.0016099999999999995,
+     0.0428
+    ],
+    "misaligned_not_above_H6": true,
+    "D2A_pass": false
+   },
+   "delta_qudit_vs_qubit_order4": {
+    "mean": 0.0376,
+    "ci95": [
+     0.0152,
+     0.0588
+    ],
+    "D2Q_pass": false
+   },
+   "H7_oracle_top1": [
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "seeds": [
+    5,
+    6,
+    7,
+    8,
+    9
+   ],
+   "n_pooled": 2500,
+   "params": {
+    "H1_linear_rank64": 524288,
+    "H2_mlp_param_matched": 520255,
+    "H4_e9_no_rotor": 528384,
+    "H6_qubit_interact": 530432,
+    "H5_qudit_interact": 526064,
+    "H5_qudit_misaligned": 526064,
+    "H6_qubit_order4": 530336
+   }
+  },
+  "acc2": {
+   "top1_pooled": {
+    "H1_linear_rank64": 0.272,
+    "H2_mlp_param_matched": 0.2076,
+    "H4_e9_no_rotor": 0.2796,
+    "H6_qubit_interact": 0.3336,
+    "H5_qudit_interact": 0.3952,
+    "H5_qudit_misaligned": 0.3964,
+    "H6_qubit_order4": 0.3992
+   },
+   "ci95_top1": {
+    "H1_linear_rank64": [
+     0.2548,
+     0.2892
+    ],
+    "H2_mlp_param_matched": [
+     0.19158999999999998,
+     0.2236
+    ],
+    "H4_e9_no_rotor": [
+     0.262,
+     0.29721999999999993
+    ],
+    "H6_qubit_interact": [
+     0.316,
+     0.352
+    ],
+    "H5_qudit_interact": [
+     0.376,
+     0.4144
+    ],
+    "H5_qudit_misaligned": [
+     0.3768,
+     0.4152
+    ],
+    "H6_qubit_order4": [
+     0.38,
+     0.4184
+    ]
+   },
+   "top1_V_pooled": {
+    "H1_linear_rank64": 0.6344,
+    "H2_mlp_param_matched": 0.5304,
+    "H4_e9_no_rotor": 0.6352,
+    "H6_qubit_interact": 0.6,
+    "H5_qudit_interact": 0.7776,
+    "H5_qudit_misaligned": 0.7568,
+    "H6_qubit_order4": 0.7632
+   },
+   "ci95_top1_V": {
+    "H1_linear_rank64": [
+     0.6152,
+     0.65321
+    ],
+    "H2_mlp_param_matched": [
+     0.5116,
+     0.5496
+    ],
+    "H4_e9_no_rotor": [
+     0.6168,
+     0.6532
+    ],
+    "H6_qubit_interact": [
+     0.582,
+     0.6184
+    ],
+    "H5_qudit_interact": [
+     0.7608,
+     0.7932
+    ],
+    "H5_qudit_misaligned": [
+     0.73999,
+     0.772
+    ],
+    "H6_qubit_order4": [
+     0.7456,
+     0.7796
+    ]
+   },
+   "regret_V_mean": {
+    "H1_linear_rank64": 0.1947552920908292,
+    "H2_mlp_param_matched": 0.33958416869673974,
+    "H4_e9_no_rotor": 0.16808008769817992,
+    "H6_qubit_interact": 0.5539239055516979,
+    "H5_qudit_interact": 0.056290497611153685,
+    "H5_qudit_misaligned": 0.06404872823239623,
+    "H6_qubit_order4": 0.05821824791137797
+   },
+   "mask_violations": {
+    "H1_linear_rank64": 0,
+    "H2_mlp_param_matched": 0,
+    "H4_e9_no_rotor": 0,
+    "H6_qubit_interact": 0,
+    "H5_qudit_interact": 0,
+    "H5_qudit_misaligned": 0,
+    "H6_qubit_order4": 0
+   },
+   "D1_beats": {
+    "H1_linear_rank64": true,
+    "H2_mlp_param_matched": true,
+    "H4_e9_no_rotor": true,
+    "H6_qubit_interact": true
+   },
+   "D1_pass": true,
+   "D1_L": "[CHƯA ĐO]",
+   "delta_align": {
+    "mean": -0.0012,
+    "ci95": [
+     -0.01481,
+     0.0124
+    ],
+    "misaligned_not_above_H6": false,
+    "D2A_pass": false
+   },
+   "delta_qudit_vs_qubit_order4": {
+    "mean": -0.004,
+    "ci95": [
+     -0.0184,
+     0.0096
+    ],
+    "D2Q_pass": true
+   },
+   "H7_oracle_top1": [
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "seeds": [
+    5,
+    6,
+    7,
+    8,
+    9
+   ],
+   "n_pooled": 2500,
+   "params": {
+    "H1_linear_rank64": 524288,
+    "H2_mlp_param_matched": 520255,
+    "H4_e9_no_rotor": 528384,
+    "H6_qubit_interact": 530432,
+    "H5_qudit_interact": 526064,
+    "H5_qudit_misaligned": 526064,
+    "H6_qubit_order4": 530336
+   }
+  },
+  "acc3": {
+   "top1_pooled": {
+    "H1_linear_rank64": 0.0036,
+    "H2_mlp_param_matched": 0.0012,
+    "H4_e9_no_rotor": 0.004,
+    "H6_qubit_interact": 0.0016,
+    "H5_qudit_interact": 0.002,
+    "H5_qudit_misaligned": 0.0028,
+    "H6_qubit_order4": 0.0012
+   },
+   "ci95_top1": {
+    "H1_linear_rank64": [
+     0.0016,
+     0.006
+    ],
+    "H2_mlp_param_matched": [
+     0.0,
+     0.0028
+    ],
+    "H4_e9_no_rotor": [
+     0.0016,
+     0.0068
+    ],
+    "H6_qubit_interact": [
+     0.0004,
+     0.0032
+    ],
+    "H5_qudit_interact": [
+     0.0004,
+     0.004
+    ],
+    "H5_qudit_misaligned": [
+     0.0008,
+     0.0052
+    ],
+    "H6_qubit_order4": [
+     0.0,
+     0.0028
+    ]
+   },
+   "top1_V_pooled": {
+    "H1_linear_rank64": 0.0228,
+    "H2_mlp_param_matched": 0.0148,
+    "H4_e9_no_rotor": 0.02,
+    "H6_qubit_interact": 0.0156,
+    "H5_qudit_interact": 0.0224,
+    "H5_qudit_misaligned": 0.0204,
+    "H6_qubit_order4": 0.0172
+   },
+   "ci95_top1_V": {
+    "H1_linear_rank64": [
+     0.0172,
+     0.0288
+    ],
+    "H2_mlp_param_matched": [
+     0.01039,
+     0.0196
+    ],
+    "H4_e9_no_rotor": [
+     0.0148,
+     0.0256
+    ],
+    "H6_qubit_interact": [
+     0.0108,
+     0.020409999999999946
+    ],
+    "H5_qudit_interact": [
+     0.0168,
+     0.0288
+    ],
+    "H5_qudit_misaligned": [
+     0.0148,
+     0.026
+    ],
+    "H6_qubit_order4": [
+     0.0124,
+     0.022409999999999944
+    ]
+   },
+   "regret_V_mean": null,
+   "mask_violations": {
+    "H1_linear_rank64": 0,
+    "H2_mlp_param_matched": 0,
+    "H4_e9_no_rotor": 0,
+    "H6_qubit_interact": 0,
+    "H5_qudit_interact": 0,
+    "H5_qudit_misaligned": 0,
+    "H6_qubit_order4": 0
+   },
+   "D1_beats": {
+    "H1_linear_rank64": false,
+    "H2_mlp_param_matched": false,
+    "H4_e9_no_rotor": false,
+    "H6_qubit_interact": false
+   },
+   "D1_pass": false,
+   "D1_L": "[CHƯA ĐO]",
+   "delta_align": {
+    "mean": -0.0008,
+    "ci95": [
+     -0.0036,
+     0.0016
+    ],
+    "misaligned_not_above_H6": true,
+    "D2A_pass": false
+   },
+   "delta_qudit_vs_qubit_order4": {
+    "mean": 0.0008,
+    "ci95": [
+     -0.0012,
+     0.0028
+    ],
+    "D2Q_pass": true
+   },
+   "H7_oracle_top1": [
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "seeds": [
+    5,
+    6,
+    7,
+    8,
+    9
+   ],
+   "n_pooled": 2500,
+   "params": {
+    "H1_linear_rank64": 524288,
+    "H2_mlp_param_matched": 520255,
+    "H4_e9_no_rotor": 528384,
+    "H6_qubit_interact": 530432,
+    "H5_qudit_interact": 526064,
+    "H5_qudit_misaligned": 526064,
+    "H6_qubit_order4": 530336
+   }
+  }
+ }
+}

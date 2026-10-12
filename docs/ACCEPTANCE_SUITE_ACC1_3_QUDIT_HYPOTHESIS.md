@@ -340,5 +340,26 @@ Vi phạm mask: 0 ở mọi arm/bài. ACC-3 mọi arm ≈ ngẫu nhiên (1/4096 
 3. ACC-Q (§8.14/§8.14.1) đo một câu hỏi khác (mô phỏng chồng chập); kết quả S2c không chặn nó, nhưng đặt kỳ vọng thấp cho lợi thế "qudit thuần".
 - Lịch sử: 2026-10-04 08:05 | Antigravity (Claude Opus 5.5) | Thêm §8.15 kết quả S2c (C1 FAIL, C2 PASS 2/3), phân tích bằng script khóa trước.
 
+### 8.16 KẾT QUẢ S2d theo tiêu chí §8.13 (2026-10-12 20:13) `[PROTOTYPE]` `[QUDIT KHÔNG HƠN QUBIT ĐỦ BẬC]`
+Chạy: `run_s2.py --suite s2d --seed-start 5 --seeds 5` cho acc1/acc2/acc3 (31/35/41 phút), phân tích bằng `analyze_s2d.py` (code/test commit `9450688` trước khi chạy seed). Dữ liệu: `results/acc_s2d_acc{1,2,3}.json`, `results/acc_s2d_analysis.json`. Working tree lúc chạy KHÔNG sạch (commit `9abd40d` + sửa test SLA ngoài `scripts/acc`); `scripts/acc` và `tests/test_acc_harness.py` không bị sửa. 0 vi phạm mask ở mọi arm/bài.
+
+| Tiêu chí | acc1 | acc2 | acc3 | Số bài đạt | Kết luận |
+|---|---|---|---|---|---|
+| D1-C (H5+V vượt H1/H2/H4/H6 +V, CI95) | KHÔNG (không vượt H6_interact) | ĐẠT | KHÔNG | **1/3** (cần ≥ 2/3) | `H5_supported_HV = false` |
+| D2-A (Δ_align cận dưới CI > 0 và misaligned ≤ H6) | KHÔNG (CI [-0.002, 0.043]) | KHÔNG | KHÔNG | **0/3** | không kích hoạt nhãn "cấu trúc biết trước" |
+| D2-Q (H5 − H6_order4 CI chứa 0 hoặc âm) | KHÔNG (Δ +0.038, CI [0.015, 0.059]) | ĐẠT (CI [-0.018, 0.010]) | ĐẠT (CI [-0.001, 0.003]) | **2/3** | nhãn `[QUDIT KHÔNG HƠN QUBIT ĐỦ BẬC]` |
+| D1-L (độ trễ C++ ≤ 1 ms p99) | `[CHƯA ĐO]` | | | | chưa có bản C++ |
+
+top1_V gộp 2.500 mẫu/bài: acc1 H5 0.669 / H6_interact 0.636 / H6_order4 0.604; acc2 H5 0.778 / H6_interact 0.600 / H6_order4 0.763; acc3 mọi arm 0.015–0.023.
+
+**Hạn chế (phải đọc kèm kết luận):**
+1. acc3 gần ngẫu nhiên ở mọi arm (kể cả H1) → D2-Q "đạt" ở acc3 là **tầm thường** (không phân biệt được arm), nên D2-Q thực chất chỉ có thông tin ở acc1 (qudit hơn qubit bậc 4 nhẹ: +0.038) và acc2 (ngang nhau).
+2. acc2 `H6_qubit_interact` có seed 5 top1 = 0.050 (tụt bất thường, pooled top1_V 0.600 < H1 0.634) `[NGHI NGỜ HUẤN LUYỆN LỆCH — CHƯA VERIFY]`. D1-C ở acc2 đạt một phần nhờ H6 yếu này. Kết luận tổng **không đổi**: nếu H6 đúng ra mạnh hơn thì acc2 D1-C cũng không đạt → D1 vẫn ≤ 1/3 < 2/3. Không loại seed (pre-register).
+3. Lợi thế của H5 so với H6_interact (acc1 +0.033 top1_V, CI gối nhau) không đủ để khẳng định qudit; H5_misaligned (0.658) gần H5 (0.669) → site khớp cấu trúc không phải nguyên nhân rõ ràng.
+4. P5 là đặc trưng tổng hợp, chưa phải hidden-state thật (S4 đang tạm dừng cùng G-ENC).
+
+**Hệ quả:** (a) không viết "qudit cho lợi thế" ở tài liệu nào (khớp DD11); (b) gắn nhãn `[QUDIT KHÔNG HƠN QUBIT ĐỦ BẬC]` vào README; (c) S3 G-ENC giữ nguyên trạng thái tạm dừng (điều kiện mở lại của DD12 — "S2d có tín hiệu dương" — **không thỏa**).
+- Lịch sử: 2026-10-12 20:15 | Antigravity IDE (Claude Sonnet 5.5, conv 46df9870) | Thêm §8.16 kết quả S2d seeds 5–9, phân tích bằng script khóa trước.
+
 
 

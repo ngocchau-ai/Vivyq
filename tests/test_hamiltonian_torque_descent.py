@@ -117,8 +117,8 @@ def test_torque_descent_loss_convergence(engine):
         engine.set_rotor_angle(i, a)
 
 
-def test_torque_descent_latency_benchmark(engine):
-    """Đo lường độ trễ thực thi vi mô của Hamiltonian Torque Descent (< 10 µs SLA)."""
+def _measure_torque_latency(engine, n=2000):
+    """Trả về mảng độ trễ (µs) của adapt_torque qua Python+ctypes."""
     np.random.seed(42)
     dummy_h = np.random.randn(CL12_DIMENSION).astype(np.float64)
     dummy_h /= np.linalg.norm(dummy_h)
@@ -127,15 +127,26 @@ def test_torque_descent_latency_benchmark(engine):
     for _ in range(100):
         engine.adapt_torque(dummy_h, 100, 200, learning_rate=0.01)
 
-    # Benchmark 2,000 chu kỳ thích nghi
-    N = 2000
-    latencies_us = np.empty(N, dtype=np.float64)
-
-    for i in range(N):
+    latencies_us = np.empty(n, dtype=np.float64)
+    for i in range(n):
         t0 = time.perf_counter()
         engine.adapt_torque(dummy_h, 100, 200, learning_rate=0.005)
         t1 = time.perf_counter()
         latencies_us[i] = (t1 - t0) * 1e6
+    return latencies_us
+
+
+@pytest.mark.xfail(strict=True, reason="SLA 60us chua dat o ROTOR_MODE_ISOLATED (do 2026-10-12: p50 ~380us). Backlog toi uu; strict=True de bao khi dat SLA.")
+def test_torque_descent_sla_60us(engine):
+    """SLA muc tieu p50 < 60 us. Hien FAIL co chu y (xfail), khong che bang nhan in."""
+    p50 = np.percentile(_measure_torque_latency(engine), 50)
+    assert p50 < 60.0, f"Torque descent p50 {p50:.2f} us vuot SLA 60 us"
+
+
+def test_torque_descent_latency_benchmark(engine):
+    """Do do tre Hamiltonian Torque Descent qua Python+ctypes; tran T_max = 500 us (SLA muc tieu 60 us: xem test_torque_descent_sla_60us)."""
+    N = 2000
+    latencies_us = _measure_torque_latency(engine, N)
 
     p50 = np.percentile(latencies_us, 50)
     p95 = np.percentile(latencies_us, 95)
@@ -153,6 +164,8 @@ def test_torque_descent_latency_benchmark(engine):
 
     # Full-stack Python+ctypes torque step — align T_max=500 (not Core-only µs claim).
     assert p50 < 500.0, f"Torque descent p50 exceeded T_max: {p50:.2f} µs"
+    # Ho so ASYNC (SLA_PROPOSAL_2026-10-12 §6c, chu du an duyet 2026-10-12): cong p99 <= 1 ms.
+    assert p99 <= 1000.0, f"Torque descent p99 exceeded ASYNC gate 1 ms: {p99:.2f} µs"
 
 
 
